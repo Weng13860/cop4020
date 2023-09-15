@@ -9,8 +9,8 @@
 */
 package edu.ufl.cise.cop4020fa23;
 
-import static edu.ufl.cise.cop4020fa23.Kind.EOF;
-
+import static edu.ufl.cise.cop4020fa23.Kind.*;
+import  edu.ufl.cise.cop4020fa23.Token.*;
 import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
 
 
@@ -20,6 +20,14 @@ public class Lexer implements ILexer {
 	int previous;
 	String[] tokens;
 
+	private enum STATE{
+		START,
+		IN_IDENT,
+		HAVE_ZERO,
+		HAVE_DOT,
+		IN_FLOAT,IN_NUM,HAVE_EQ,HAVE_MINUS}
+
+	}
 
 	public Lexer(String input) {
 		this.input = input;
@@ -32,7 +40,7 @@ public class Lexer implements ILexer {
 	* if it has a space, split
 	*
 	*/
-	public String[] tokenize(input){
+	public String[] tokenize(String input){
 		if(input == null){
 			return new String[0];
 		}
@@ -158,22 +166,43 @@ public class Lexer implements ILexer {
 		return Kind.ERROR; // Default case
 	}
 
-	public IToken next(){
-		tokens = tokenize(input);
-		previous += 1;
-		// figure out kind, and make token
-		if(previous == 0){
-			return new Token(IDENT, 0, tokens[previous].length(), tokens[previous], new SourceLocation(1,1));
-		}
-		// edit source location
-		else {
-			return new Token(determineKind(tokens[previous]), tokens[previous-1].length()+1, tokens[previous].length(), tokens[previous], new SourceLocation(1,1));
-		}
-	}
+
 
 	@Override
 	public IToken next() throws LexicalException {
-		return new Token(EOF, 0, 0, null, new SourceLocation(1, 1));
+		tokens=tokenize(input);
+		int pos=0;
+		IToken token;
+		/*if (previous==0){
+			return new Token(IDENT,0,tokens[previous].length(),tokens[previous].toCharArray(),new SourceLocation(1,1));
+		}
+		else {
+			return new Token(determineKind(tokens[previous]),tokens[previous].length()+1,tokens[previous].length(),tokens[previous].toCharArray(),new SourceLocation(1,1));
+		}*/
+		STATE state=STATE.START;
+		while(true){
+			char ch=tokens[previous].charAt(pos);
+			switch (state) {
+				case START -> {
+					previous=pos;
+					switch (ch) {
+						case' ','\t','\n','\r','\t'->{pos++;}
+						case '+'->
+					}
+				}
+				case IN_IDENT -> {
+
+				}
+				case HAVE_ZERO -> {}
+				case HAVE_DOT -> {}
+				case IN_NUM -> {}
+				case HAVE_MINUS -> {}
+				case HAVE_EQ -> {}
+				case IN_FLOAT -> {}
+
+			}
+		}
+
 	}
 
 
