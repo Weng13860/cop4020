@@ -18,7 +18,7 @@ public class Lexer implements ILexer {
 
 	String input;
 	int previous;
-	String[] tokens;
+	char[]ch;
 
 	private enum STATE{
 		START,
@@ -30,8 +30,8 @@ public class Lexer implements ILexer {
 	}
 
 	public Lexer(String input) {
-		this.input = input;
-		previous = -1;
+		ch = input.toCharArray();
+		previous =0;
 	}
 
 	/*
@@ -170,9 +170,7 @@ public class Lexer implements ILexer {
 
 	@Override
 	public IToken next() throws LexicalException {
-		tokens=tokenize(input);
-		int pos=0;
-		IToken token;
+
 		/*if (previous==0){
 			return new Token(IDENT,0,tokens[previous].length(),tokens[previous].toCharArray(),new SourceLocation(1,1));
 		}
@@ -180,11 +178,12 @@ public class Lexer implements ILexer {
 			return new Token(determineKind(tokens[previous]),tokens[previous].length()+1,tokens[previous].length(),tokens[previous].toCharArray(),new SourceLocation(1,1));
 		}*/
 		STATE state=STATE.START;
+		int pos=0;
 		while(true){
-			char ch=tokens[previous].charAt(pos);
+
 			switch (state) {
 				case START -> {
-					previous=pos;
+					pos=previous;
 					switch (ch) {
 						case' ','\t','\n','\r','\t'->{pos++;}
 						case '+'->
