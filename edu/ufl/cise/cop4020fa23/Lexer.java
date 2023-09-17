@@ -7,6 +7,7 @@
 * 
 * This code may not be posted on a public web site either during or after the course.  
 */
+
 package edu.ufl.cise.cop4020fa23;
 
 import static edu.ufl.cise.cop4020fa23.Kind.*;
@@ -25,7 +26,7 @@ public class Lexer implements ILexer {
 	int column=1;
 	char ch;
 
-
+	// states for numerical equations or tokens
 	private enum STATE{
 		START,
 		IN_IDENT,
@@ -34,7 +35,7 @@ public class Lexer implements ILexer {
 		IN_FLOAT,IN_NUM,HAVE_EQ,HAVE_MINUS,HAVE_BITand}
 
 
-
+	// creates an array of chars from input for easier access to tokens
 	public Lexer(String input) {
 		chars = input.toCharArray();
 		previous =0;
@@ -42,14 +43,14 @@ public class Lexer implements ILexer {
 	}
 
 	/*
-	* loop through input, parsing by space
-	* assess each token as a type
-	* if it has a space, split
-	*
-	*/
+	 * loop through input, parsing by space
+	 * assess each token as a type
+	 * if it has a space, split
+	 *
+	 */
 
 
-
+	// used to go through tokens one at a time
 	@Override
 	public IToken next() throws LexicalException {
 
@@ -70,15 +71,15 @@ public class Lexer implements ILexer {
 					switch (ch) {
 						case '\0'->{return new Token(EOF,previous,0,null,new SourceLocation(line,column));}
 						case' ','\t','\r'->{pos++;
-						column++;}
+							column++;}
 						case '\n'->{
 							line++;
 							column=1;}
 						case '-'->{
 							state=STATE.HAVE_MINUS;
 							pos++;
-						column++;
-						ch=chars[pos];
+							column++;
+							ch=chars[pos];
 						}
 						case'&'->{
 							pos++;
@@ -91,9 +92,18 @@ public class Lexer implements ILexer {
 				case IN_IDENT -> {
 
 				}
-				case HAVE_ZERO -> {}
-				case HAVE_DOT -> {}
+				// if the number is 0
+				case HAVE_ZERO -> {
+					return new Token(NUM_LIT, pos - chars.length - 1, pos - previous, chars[pos], new SourceLocation());
+					// don't increase position bc 0 can only be 0, not 00}
+				}
+				// if the number is a decimal
+				case HAVE_DOT -> {
+					return new Token(NUM_LIT, pos - chars.length-1, pos-previous, chars[pos], new SourceLocation());
+					pos++;}
+				// for multiple digit numbers
 				case IN_NUM -> {}
+				// equation
 				case HAVE_MINUS -> {
 					if(ch=='>') {
 						pos++;
