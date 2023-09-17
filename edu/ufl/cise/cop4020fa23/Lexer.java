@@ -190,8 +190,17 @@ public class Lexer implements ILexer {
 				case START -> {
 					pos=previous;
 					switch (ch) {
-						case' ','\t','\n','\r'->{pos++;}
-						case '+'->{}
+						case' ','\t','\r'->{pos++;
+						column++;}
+						case '\n'->{line++;
+							column=1;}
+						case '-'->{
+							state=STATE.HAVE_MINUS;
+							pos++;
+						column++;
+						ch=chars[pos];
+						}
+
 					}
 				}
 				case IN_IDENT -> {
@@ -200,7 +209,14 @@ public class Lexer implements ILexer {
 				case HAVE_ZERO -> {}
 				case HAVE_DOT -> {}
 				case IN_NUM -> {}
-				case HAVE_MINUS -> {}
+				case HAVE_MINUS -> {
+					if(ch=='>') {
+						return new Token(RARROW,pos- chars.length-1,2,chars[pos],new SourceLocation());
+						state=STATE.START;
+						pos++;
+					column++;
+					}
+				}
 				case HAVE_EQ -> {}
 				case IN_FLOAT -> {}
 
