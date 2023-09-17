@@ -23,7 +23,7 @@ public class Lexer implements ILexer {
 	int column=1;
 	char ch;
 
-
+	// states for numerical equations or tokens
 	private enum STATE{
 		START,
 		IN_IDENT,
@@ -32,18 +32,14 @@ public class Lexer implements ILexer {
 		IN_FLOAT,IN_NUM,HAVE_EQ,HAVE_MINUS
 	}
 
+	// creates an array of chars from input for easier access to tokens
 	public Lexer(String input) {
 		chars = input.toCharArray();
 		previous =0;
 		ch=chars[previous];
 	}
 
-	/*
-	* loop through input, parsing by space
-	* assess each token as a type
-	* if it has a space, split
-	*
-	*/
+	// splits tokens based on whitespace, \r, \n, etc.
 	public String[] tokenize(String input){
 		if(input == null){
 			return new String[0];
@@ -51,6 +47,7 @@ public class Lexer implements ILexer {
 		return input.split("\\s+");
 	}
 
+	// from token, determine what kind of token it is
 	public static Kind determineKind(String token) {
 		switch(token) {
 			case ",":
@@ -171,7 +168,7 @@ public class Lexer implements ILexer {
 	}
 
 
-
+	// used to go through tokens one at a time
 	@Override
 	public IToken next() throws LexicalException {
 
