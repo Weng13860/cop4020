@@ -96,13 +96,14 @@ public class Lexer implements ILexer {
 				case HAVE_ZERO -> {
 					char[] source = Arrays.copyOfRange(chars, previous, pos);
 					return new Token(NUM_LIT, previous, pos - previous, source, new SourceLocation(line, column));
-					// don't increase position bc 0 can only be 0, not 00}
+					// don't increase position bc 0 can only be 0, not 00
 				}
 				// if the number is a decimal
 				case HAVE_DOT -> {
+					pos++;
 					char[] source = Arrays.copyOfRange(chars, previous, pos);
 					return new Token(NUM_LIT, previous, pos-previous, source, new SourceLocation(line, column));
-					pos++;}
+				}
 				// for multiple digit numbers
 				case IN_NUM -> {}
 				// equation
