@@ -18,7 +18,11 @@ public class Lexer implements ILexer {
 
 	String input;
 	int previous;
-	char[]ch;
+	char[]chars;
+	int line=1;
+	int column=1;
+	char ch;
+
 
 	private enum STATE{
 		START,
@@ -30,8 +34,9 @@ public class Lexer implements ILexer {
 	}
 
 	public Lexer(String input) {
-		ch = input.toCharArray();
+		chars = input.toCharArray();
 		previous =0;
+		ch=chars[previous];
 	}
 
 	/*
@@ -179,14 +184,15 @@ public class Lexer implements ILexer {
 		}*/
 		STATE state=STATE.START;
 		int pos=0;
+
 		while(true){
 
 			switch (state) {
 				case START -> {
 					pos=previous;
 					switch (ch) {
-						case' ','\t','\n','\r','\t'->{pos++;}
-						case '+'->
+						case' ','\t','\n','\r'->{pos++;}
+						case '+'->{}
 					}
 				}
 				case IN_IDENT -> {
