@@ -29,8 +29,7 @@ public class Lexer implements ILexer {
 		IN_IDENT,
 		HAVE_ZERO,
 		HAVE_DOT,
-		IN_FLOAT,IN_NUM,HAVE_EQ,HAVE_MINUS}
-
+		IN_FLOAT,IN_NUM,HAVE_EQ,HAVE_MINUS
 	}
 
 	public Lexer(String input) {
