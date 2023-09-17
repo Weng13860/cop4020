@@ -148,11 +148,10 @@ public class Lexer implements ILexer {
 							return Kind.RES_green;
 						case "blue":
 							return Kind.RES_blue;
-						case "TRUE":
+						case "TRUE", "FALSE":
 							return Kind.BOOLEAN_LIT;
-						case "FALSE":
-							return Kind.BOOLEAN_LIT;
-						// Add cases for other colors like BLACK, BLUE, etc. under CONST if they're also identifiers
+						case "Z", "BLACK", "BLUE", "CYAN", "DARK_GRAY", "GRAY", "GREEN", "LIGHT_GRAY", "MAGENTA", "ORANGE", "PINK", "RED", "WHITE", "YELLOW":
+							return Kind.CONST;
 						default:
 							return Kind.IDENT;
 					}
@@ -161,7 +160,6 @@ public class Lexer implements ILexer {
 				} else if (token.startsWith("\"") && token.endsWith("\"")) {
 					return Kind.STRING_LIT;
 				}
-				// Additional logic for determining other token kinds can be added as needed
 				break;
 		}
 		return Kind.ERROR; // Default case
