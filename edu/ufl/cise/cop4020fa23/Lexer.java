@@ -13,6 +13,8 @@ import static edu.ufl.cise.cop4020fa23.Kind.*;
 import  edu.ufl.cise.cop4020fa23.Token.*;
 import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
 
+import java.util.Arrays;
+
 
 public class Lexer implements ILexer {
 
@@ -29,14 +31,14 @@ public class Lexer implements ILexer {
 		IN_IDENT,
 		HAVE_ZERO,
 		HAVE_DOT,
-		IN_FLOAT,IN_NUM,HAVE_EQ,HAVE_MINUS}
+		IN_FLOAT,IN_NUM,HAVE_EQ,HAVE_MINUS,HAVE_BITand}
 
-	}
+
 
 	public Lexer(String input) {
 		chars = input.toCharArray();
 		previous =0;
-		ch=chars[previous];
+		ch=(chars.length>0)?chars[previous]:'\0';
 	}
 
 	/*
@@ -45,131 +47,6 @@ public class Lexer implements ILexer {
 	* if it has a space, split
 	*
 	*/
-	public String[] tokenize(String input){
-		if(input == null){
-			return new String[0];
-		}
-		return input.split("\\s+");
-	}
-
-	public static Kind determineKind(String token) {
-		switch(token) {
-			case ",":
-				return Kind.COMMA;
-			case ";":
-				return Kind.SEMI;
-			case "?":
-				return Kind.QUESTION;
-			case ":":
-				return Kind.COLON;
-			case "(":
-				return Kind.LPAREN;
-			case ")":
-				return Kind.RPAREN;
-			case "<":
-				return Kind.LT;
-			case ">":
-				return Kind.GT;
-			case "[":
-				return Kind.LSQUARE;
-			case "]":
-				return Kind.RSQUARE;
-			case "=":
-				return Kind.ASSIGN;
-			case "==":
-				return Kind.EQ;
-			case "<=":
-				return Kind.LE;
-			case ">=":
-				return Kind.GE;
-			case "!":
-				return Kind.BANG;
-			case "&":
-				return Kind.BITAND;
-			case "&&":
-				return Kind.AND;
-			case "|":
-				return Kind.BITOR;
-			case "||":
-				return Kind.OR;
-			case "+":
-				return Kind.PLUS;
-			case "-":
-				return Kind.MINUS;
-			case "*":
-				return Kind.TIMES;
-			case "**":
-				return Kind.EXP;
-			case "/":
-				return Kind.DIV;
-			case "%":
-				return Kind.MOD;
-			case "<:":
-				return Kind.BLOCK_OPEN;
-			case ":>":
-				return Kind.BLOCK_CLOSE;
-			case "^":
-				return Kind.RETURN;
-			case "->":
-				return Kind.RARROW;
-			case "[]":
-				return Kind.BOX;
-			default:
-				if (token.matches("^[a-zA-Z_][a-zA-Z0-9_]*$")) {
-					// Match against all reserved words
-					switch(token) {
-						case "image":
-							return Kind.RES_image;
-						case "pixel":
-							return Kind.RES_pixel;
-						case "int":
-							return Kind.RES_int;
-						case "string":
-							return Kind.RES_string;
-						case "void":
-							return Kind.RES_void;
-						case "boolean":
-							return Kind.RES_boolean;
-						case "nil":
-							return Kind.RES_nil;
-						case "write":
-							return Kind.RES_write;
-						case "height":
-							return Kind.RES_height;
-						case "width":
-							return Kind.RES_width;
-						case "if":
-							return Kind.RES_if;
-						case "fi":
-							return Kind.RES_fi;
-						case "do":
-							return Kind.RES_do;
-						case "od":
-							return Kind.RES_od;
-						case "red":
-							return Kind.RES_red;
-						case "green":
-							return Kind.RES_green;
-						case "blue":
-							return Kind.RES_blue;
-						case "TRUE":
-							return Kind.BOOLEAN_LIT;
-						case "FALSE":
-							return Kind.BOOLEAN_LIT;
-						// Add cases for other colors like BLACK, BLUE, etc. under CONST if they're also identifiers
-						default:
-							return Kind.IDENT;
-					}
-				} else if (token.matches("^[0-9]+$")) {
-					return Kind.NUM_LIT;
-				} else if (token.startsWith("\"") && token.endsWith("\"")) {
-					return Kind.STRING_LIT;
-				}
-				// Additional logic for determining other token kinds can be added as needed
-				break;
-		}
-		return Kind.ERROR; // Default case
-	}
 
 
 
@@ -189,17 +66,24 @@ public class Lexer implements ILexer {
 
 			switch (state) {
 				case START -> {
-					pos=previous;
+					previous=pos;
 					switch (ch) {
+						case '\0'->{return new Token(EOF,previous,0,null,new SourceLocation(line,column));}
 						case' ','\t','\r'->{pos++;
 						column++;}
-						case '\n'->{line++;
+						case '\n'->{
+							line++;
 							column=1;}
 						case '-'->{
 							state=STATE.HAVE_MINUS;
 							pos++;
 						column++;
 						ch=chars[pos];
+						}
+						case'&'->{
+							pos++;
+							column++;
+							state=STATE.HAVE_BITand;
 						}
 
 					}
@@ -212,15 +96,35 @@ public class Lexer implements ILexer {
 				case IN_NUM -> {}
 				case HAVE_MINUS -> {
 					if(ch=='>') {
-						return new Token(RARROW,pos- chars.length-1,2,chars[pos],new SourceLocation());
-						state=STATE.START;
 						pos++;
-					column++;
-					}
+						column++;
+						char[] source = Arrays.copyOfRange(chars, previous, pos);
+						return new Token(RARROW,previous,2,source,new SourceLocation(line,column));}
+
+
+
+
+
 				}
-				case HAVE_EQ -> {}
+				case HAVE_BITand -> {
+					if(ch=='&') {
+						pos++;
+						column++;
+						char[] source = Arrays.copyOfRange(chars, previous, pos);
+
+						return new Token(AND,previous,2,source,new SourceLocation(line,column));
+					}
+					else{char[] source = Arrays.copyOfRange(chars, previous, pos);
+						return new Token(BITAND,previous,1,source,new SourceLocation(line,column));}
+				}
 				case IN_FLOAT -> {}
 
+			}
+			pos++;
+			if(pos<chars.length) {
+				ch = chars[pos];
+			}
+			else{ch='\0';
 			}
 		}
 
