@@ -94,12 +94,14 @@ public class Lexer implements ILexer {
 				}
 				// if the number is 0
 				case HAVE_ZERO -> {
-					return new Token(NUM_LIT, pos - chars.length - 1, pos - previous, chars[pos], new SourceLocation(line, column));
+					char[] source = Arrays.copyOfRange(chars, previous, pos);
+					return new Token(NUM_LIT, previous, pos - previous, source, new SourceLocation(line, column));
 					// don't increase position bc 0 can only be 0, not 00}
 				}
 				// if the number is a decimal
 				case HAVE_DOT -> {
-					return new Token(NUM_LIT, pos - chars.length-1, pos-previous, chars[pos], new SourceLocation(line, column));
+					char[] source = Arrays.copyOfRange(chars, previous, pos);
+					return new Token(NUM_LIT, previous, pos-previous, source, new SourceLocation(line, column));
 					pos++;}
 				// for multiple digit numbers
 				case IN_NUM -> {}
@@ -109,12 +111,8 @@ public class Lexer implements ILexer {
 						pos++;
 						column++;
 						char[] source = Arrays.copyOfRange(chars, previous, pos);
-						return new Token(RARROW,previous,2,source,new SourceLocation(line,column));}
-
-
-
-
-
+						return new Token(RARROW,previous,2,source,new SourceLocation(line,column));
+					}
 				}
 				case HAVE_BITand -> {
 					if(ch=='&') {
