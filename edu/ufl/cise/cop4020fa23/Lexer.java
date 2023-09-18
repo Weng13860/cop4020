@@ -51,7 +51,14 @@ public class Lexer implements ILexer {
      *
      */
 
-
+    // ensures that number is within integer range
+    public static void validateNumLit(String numStr) throws LexicalException {
+        try {
+            Integer.parseInt(numStr);
+        } catch (NumberFormatException e) {
+            throw new LexicalException();
+        }
+    }
     // used to go through tokens one at a time
     @Override
     public IToken next() throws LexicalException {
@@ -135,6 +142,14 @@ public class Lexer implements ILexer {
 
                 // for multiple digit numbers
                 case IN_NUM -> {
+                    while (Character.isDigit(ch) && pos < chars.length) {
+                        pos++;
+                        if (pos < chars.length) {
+                            ch = chars[pos];
+                        }
+                    }
+                    String numStr = new String(chars, previous, pos - previous);
+                    validateNumLit(numStr);
                     char[] source = Arrays.copyOfRange(chars, previous, pos);
                     return new Token(NUM_LIT, previous, pos-previous, source, new SourceLocation(line, column));
                 }
