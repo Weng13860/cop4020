@@ -98,11 +98,11 @@ public class Lexer implements ILexer {
                             char[] source = Arrays.copyOfRange(chars, previous, pos);
                             return new Token(STRING_LIT, previous, pos - previous, source, new SourceLocation(line, column));
                         }
-//                        case 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', '$', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' -> {
-//                            pos++;
-//                            column++;
-//                            state = STATE.IN_IDENT;
-//                        }
+                        case 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', '$', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' -> {
+                            state = STATE.IN_IDENT;
+                            pos++;
+                            column++;
+                        }
                         case '0' -> {
                             state = STATE.HAVE_ZERO;
                             pos++;
@@ -110,7 +110,7 @@ public class Lexer implements ILexer {
                         }
                         case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
                             state = STATE.IN_NUM;
-                            previous = pos;
+                            //previous = pos;
                             pos++;
                             column++;
                         }
@@ -121,18 +121,19 @@ public class Lexer implements ILexer {
                     char[] source = Arrays.copyOfRange(chars, previous, pos);
                     return new Token(IDENT, previous, pos - previous, source, new SourceLocation(line, column));
                 }
+
                 // if the number is 0
                 case HAVE_ZERO -> {
-                    if(previous == 0){
+                    if (Character.isDigit(ch) && ch != '0') {
                         char[] source = Arrays.copyOfRange(chars, previous, pos);
-                        return new Token(NUM_LIT, previous, pos, source, new SourceLocation(line, column));
+                        return new Token(NUM_LIT, previous, pos-previous, source, new SourceLocation(line, column));
                     }
-                    else{
+                    else {
                         char[] source = Arrays.copyOfRange(chars, previous, pos);
                         return new Token(NUM_LIT, previous, pos - previous, source, new SourceLocation(line, column));
                     }
-                    // increase pos if next character is dot
                 }
+
 
                 // if the number is a decimal
                 case HAVE_DOT -> {
