@@ -33,7 +33,7 @@ public class Lexer implements ILexer {
         IN_IDENT,
         HAVE_ZERO,
         HAVE_DOT,
-
+        IN_STRING,
         IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS, HAVE_BITand
     }
 
@@ -94,20 +94,20 @@ public class Lexer implements ILexer {
                             state = STATE.HAVE_BITand;
                         }
                         case '\"' -> {
+                            state = STATE.IN_STRING;
+                            ch = (pos < chars.length) ? chars[pos] : '\0';
                             pos++;
-                            char[] source = Arrays.copyOfRange(chars, previous, pos);
-                            return new Token(STRING_LIT, previous, pos - previous, source, new SourceLocation(line, column));
                         }
                         case 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', '$', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' -> {
                             state = STATE.IN_IDENT;
                             pos++;
                             column++;
                         }
-                        case '0' -> {
-                            state = STATE.HAVE_ZERO;
-                            pos++;
-                            column++;
-                        }
+//                        case '0' -> {
+//                            state = STATE.HAVE_ZERO;
+//                            pos++;
+//                            column++;
+//                        }
                         case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
                             state = STATE.IN_NUM;
                             //previous = pos;
@@ -117,22 +117,41 @@ public class Lexer implements ILexer {
                     }
                 }
                 case IN_IDENT -> {
-                    pos++;
+                    while (Character.isLetterOrDigit(ch) || ch == '_') {
+                        pos++;
+                        if (pos < chars.length) {
+                            ch = chars[pos];
+                        } else {
+                            ch = '\0';
+                        }
+                    }
+                    String identStr = new String(chars, previous, pos - previous);
                     char[] source = Arrays.copyOfRange(chars, previous, pos);
                     return new Token(IDENT, previous, pos - previous, source, new SourceLocation(line, column));
+//                    pos++;
+//                    char[] source = Arrays.copyOfRange(chars, previous, pos);
+//                    return new Token(IDENT, previous, pos - previous, source, new SourceLocation(line, column));
                 }
-
+                case IN_STRING -> {
+                    while (ch != '\"' && pos < chars.length) {
+                        pos++;
+                        ch = (pos < chars.length) ? chars[pos] : '\0';
+                    }
+                    if (ch == '\"') {
+                        pos++;  // This line moves past the closing "
+                        char[] source = Arrays.copyOfRange(chars, previous, pos);
+                        ch = (pos < chars.length) ? chars[pos] : '\0';  // Keep this line to set the next character, but don't skip any characters
+                        return new Token(STRING_LIT, previous, pos - previous, source, new SourceLocation(line, column));
+                    } else {
+                        throw new LexicalException("Unterminated string literal.");
+                    }
+                }
                 // if the number is 0
-                case HAVE_ZERO -> {
-                    if (Character.isDigit(ch) && ch != '0') {
-                        char[] source = Arrays.copyOfRange(chars, previous, pos);
-                        return new Token(NUM_LIT, previous, pos-previous, source, new SourceLocation(line, column));
-                    }
-                    else {
-                        char[] source = Arrays.copyOfRange(chars, previous, pos);
-                        return new Token(NUM_LIT, previous, pos - previous, source, new SourceLocation(line, column));
-                    }
-                }
+//                case HAVE_ZERO -> {
+//                    char[] source = Arrays.copyOfRange(chars, previous, pos);
+//                    return new Token(NUM_LIT, previous, pos-previous, source, new SourceLocation(line, column));
+//
+//                }
 
 
                 // if the number is a decimal
@@ -144,6 +163,9 @@ public class Lexer implements ILexer {
                 // for multiple digit numbers
                 case IN_NUM -> {
                     while (Character.isDigit(ch) && pos < chars.length) {
+                        if(ch == '0'){ // If we encounter a 0 while in IN_NUM state, we break to handle it as a single token.
+                            break;
+                        }
                         pos++;
                         if (pos < chars.length) {
                             ch = chars[pos];
