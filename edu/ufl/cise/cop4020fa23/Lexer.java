@@ -34,7 +34,7 @@ public class Lexer implements ILexer {
         HAVE_ZERO,
         HAVE_DOT,
         IN_STRING,
-        IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS, HAVE_BITand
+        IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS, HAVE_BITAND, HAVE_PLUS
     }
 
     // creates an array of chars from input for easier access to tokens
@@ -79,6 +79,7 @@ public class Lexer implements ILexer {
                             column++;
                         }
                         case '\n' -> {
+                            pos++;
                             line++;
                             column = 1;
                         }
@@ -88,15 +89,22 @@ public class Lexer implements ILexer {
                             column++;
                             ch = chars[pos];
                         }
-                        case '&' -> {
+                        case '+' -> {
+                            state = STATE.HAVE_PLUS;
                             pos++;
                             column++;
-                            state = STATE.HAVE_BITand;
+                            ch = chars[pos];
+                        }
+                        case '&' -> {
+                            state = STATE.HAVE_BITAND;
+                            pos++;
+                            column++;
                         }
                         case '\"' -> {
                             state = STATE.IN_STRING;
                             ch = (pos < chars.length) ? chars[pos] : '\0';
                             pos++;
+                            column++;
                         }
                         case 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', '$', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' -> {
                             state = STATE.IN_IDENT;
@@ -110,27 +118,75 @@ public class Lexer implements ILexer {
 //                        }
                         case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
                             state = STATE.IN_NUM;
-                            //previous = pos;
                             pos++;
                             column++;
+                        }
+                        case '<'->{
+                            pos++;
+                            ch = (pos < chars.length) ? chars[pos] : '\0';
+                            if(ch == '='){
+                                char[] source = Arrays.copyOfRange(chars, previous, pos+1);
+                                return new Token(LE, previous, pos - previous, source, new SourceLocation(line, column));
+                            }
+                            else{
+                                char[] source = Arrays.copyOfRange(chars, previous, pos);
+                                return new Token(LT, previous, pos - previous, source, new SourceLocation(line, column));
+                            }
+                        }
+                        case ','->{
+                            pos++;
+                            line++;
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, previous, pos);
+                            return new Token(COMMA, previous, pos-previous-1, source, new SourceLocation(line, column));
+                        }
+                        case '['->{
+                            pos++;
+                            line++;
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, previous, pos);
+                            return new Token(LSQUARE, previous, pos-previous-1, source, new SourceLocation(line, column));
+                        }
+                        case ']'->{
+                            pos++;
+                            line++;
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, previous, pos);
+                            return new Token(RSQUARE, previous, pos-previous-1, source, new SourceLocation(line, column));
+                        }
+                        case '%'->{
+                            pos++;
+                            line++;
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, previous, pos);
+                            return new Token(MOD, previous, pos-previous-1, source, new SourceLocation(line, column));
+                        }
+                        case '?'->{
+                            pos++;
+                            line++;
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, previous, pos);
+                            return new Token(QUESTION, previous, pos-previous-1, source, new SourceLocation(line, column));
+                        }
+                        case ';'->{
+                            pos++;
+                            line++;
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, previous, pos);
+                            return new Token(SEMI, previous, pos-previous-1, source, new SourceLocation(line, column));
+                        }
+                        case '!'->{
+                            pos++;
+                            line++;
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, previous, pos);
+                            return new Token(BANG, previous, pos-previous-1, source, new SourceLocation(line, column));
                         }
                     }
                 }
                 case IN_IDENT -> {
-                    while (Character.isLetterOrDigit(ch) || ch == '_') {
-                        pos++;
-                        if (pos < chars.length) {
-                            ch = chars[pos];
-                        } else {
-                            ch = '\0';
-                        }
-                    }
-                    String identStr = new String(chars, previous, pos - previous);
                     char[] source = Arrays.copyOfRange(chars, previous, pos);
                     return new Token(IDENT, previous, pos - previous, source, new SourceLocation(line, column));
-//                    pos++;
-//                    char[] source = Arrays.copyOfRange(chars, previous, pos);
-//                    return new Token(IDENT, previous, pos - previous, source, new SourceLocation(line, column));
                 }
                 case IN_STRING -> {
                     while (ch != '\"' && pos < chars.length) {
@@ -163,7 +219,7 @@ public class Lexer implements ILexer {
                 // for multiple digit numbers
                 case IN_NUM -> {
                     while (Character.isDigit(ch) && pos < chars.length) {
-                        if(ch == '0'){ // If we encounter a 0 while in IN_NUM state, we break to handle it as a single token.
+                        if(ch == '0'){
                             break;
                         }
                         pos++;
@@ -186,14 +242,20 @@ public class Lexer implements ILexer {
                         return new Token(RARROW, previous, 2, source, new SourceLocation(line, column));
                     }
                 }
-                case HAVE_BITand -> {
+                case HAVE_PLUS -> {
+                    pos++;
+                    column++;
+                    char[] source = Arrays.copyOfRange(chars, previous, pos);
+                    return new Token(PLUS, previous, 2, source, new SourceLocation(line, column));
+                }
+                case HAVE_BITAND -> {
                     if (ch == '&') {
                         pos++;
-                        column++;
                         char[] source = Arrays.copyOfRange(chars, previous, pos);
-
+                        ch = (pos < chars.length) ? chars[pos] : '\0';
                         return new Token(AND, previous, 2, source, new SourceLocation(line, column));
-                    } else {
+                    }
+                    else {
                         char[] source = Arrays.copyOfRange(chars, previous, pos);
                         return new Token(BITAND, previous, 1, source, new SourceLocation(line, column));
                     }
