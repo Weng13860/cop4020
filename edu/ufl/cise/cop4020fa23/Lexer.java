@@ -19,67 +19,120 @@ import java.util.Arrays;
 public class Lexer implements ILexer {
 
     String input;
-    int line;
-    int column;
-    int pos=0;
+
+    int line=1;
+    int column=1;
+    int pos = 0;
     char[] chars;
     char ch;
-    char[]chs;
-    int previous=0;
+    char[] chs;
+    int previous = 0;
+
+    public enum STATE {
+        START,
+        HAVE_LSQUARE,
+
+    }
+
+    STATE state = STATE.START;
+
     public Lexer(String input) {
 
-        this.chars=input.toCharArray();
-
-
-
+        this.chars = input.toCharArray();
 
 
     }
 
+
     @Override
     public IToken next() throws LexicalException {
-        pos=previous;
+        pos = previous;
 
 
-        while(true){
+        while (true) {
+
             ch = (pos < chars.length) ? chars[pos] : '\0';
-            if(ch == '\0'){
+            if (ch == '\0') {
                 return new Token(EOF, 0, 0, null, new SourceLocation(1, 1));
             }
+            else {
 
-            pos++;
 
-            switch(ch){
-            case ','->{
-                char[]source=Arrays.copyOfRange(chars,previous,pos);
-                previous=pos;
-                return new Token(COMMA,pos,1,source,new SourceLocation(line,column));
+                switch (state) {
+                    case START -> {
 
-            }
-            case '['->{
-                char[]source=Arrays.copyOfRange(chars,previous,pos);
-                previous=pos;
-                return new Token(LSQUARE,pos,1,source,new SourceLocation(line,column));
+                        switch (ch) {
+                            case '\t', ' ' -> {
+                                column++;
+                                pos++;
+                                previous=pos;
 
-            }
-            case']'->{
-                char[]source=Arrays.copyOfRange(chars,previous,pos);
-                previous=pos;
-                return new Token(RSQUARE,pos,1,source,new SourceLocation(line,column));
-            }
-            case '%'->{
-                char[]source=Arrays.copyOfRange(chars,previous,pos);
-                previous=pos;
-                return new Token(MOD,pos,1,source,new SourceLocation(line,column));
-            }
-            case '+'->{
-                char[]source=Arrays.copyOfRange(chars,previous,pos);
-                previous=pos;
-                return new Token(PLUS,pos,1,source,new SourceLocation(line,column));
-            }
-            }
+                            }
+                            case '\n' -> {
+                                line++;
+                                column = 1;
+                            }
+                            case ',' -> {
+                                pos++;
+                                char[] source = Arrays.copyOfRange(chars, previous, pos);
+                                previous = pos;
+                                return new Token(COMMA, pos, 1, source, new SourceLocation(line, column));
 
+                            }
+                            case '[' -> {
+                                pos++;
+                                state = STATE.HAVE_LSQUARE;
+
+                            }
+                            case ']' -> {
+                                pos++;
+                                char[] source = Arrays.copyOfRange(chars, previous, pos);
+                                previous = pos;
+                                return new Token(RSQUARE, pos, 1, source, new SourceLocation(line, column));
+                            }
+                            case '%' -> {
+                                pos++;
+                                char[] source = Arrays.copyOfRange(chars, previous, pos);
+                                previous = pos;
+                                return new Token(MOD, pos, 1, source, new SourceLocation(line, column));
+                            }
+                            case '+' -> {
+                                pos++;
+                                char[] source = Arrays.copyOfRange(chars, previous, pos);
+                                previous = pos;
+                                return new Token(PLUS, pos, 1, source, new SourceLocation(line, column));
+                            }
+                        }
+
+
+                    }
+                    case HAVE_LSQUARE -> {
+                        ch=chars[pos];
+
+                        if (ch == ']') {
+                            pos++;
+
+                            char[] source = Arrays.copyOfRange(chars, previous, pos);
+                            previous = pos;
+                            state=STATE.START;
+                            return new Token(BOX, pos, 2, source, new SourceLocation(line, column));
+                        } else {
+
+                            char[] source = Arrays.copyOfRange(chars, previous, pos);
+                            previous = pos;
+                            state=STATE.START;
+                            return new Token(LSQUARE, pos, 1, source, new SourceLocation(line, column));
+
+                        }
+                    }
+
+
+                }
+            }
         }
 
 
-    }}
+    }
+    }
+
+
