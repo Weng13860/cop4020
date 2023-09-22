@@ -46,33 +46,40 @@ public class Lexer implements ILexer {
 
     @Override
     public IToken next() throws LexicalException {
+        //renew position everytime call the next()func.
         pos = previous;
 
 
         while (true) {
-
+            //every loop refresh ch since add previous=pos at the end of loop
             ch = (pos < chars.length) ? chars[pos] : '\0';
+            //get /0 if it is last ch. and return eof
             if (ch == '\0') {
                 return new Token(EOF, 0, 0, null, new SourceLocation(1, 1));
             }
             else {
-
-
+                //state=start and refreshed ch in this loop
                 switch (state) {
                     case START -> {
 
                         switch (ch) {
                             case '\t', ' ' -> {
+                                // whitespace still work in this loop but need move position and col,but since it does not count as any type of result we need
+                                //move previous also
                                 column++;
                                 pos++;
                                 previous=pos;
 
                             }
                             case '\n' -> {
+                                //new line, but remain pos.
                                 line++;
                                 column = 1;
                             }
                             case ',' -> {
+                                //before return token, need to count pos, get source, and renew previous
+                                //if the state is start, no need to renew state.
+                                //else need set state as start for next()call.
                                 pos++;
                                 char[] source = Arrays.copyOfRange(chars, previous, pos);
                                 previous = pos;
