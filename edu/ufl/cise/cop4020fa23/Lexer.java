@@ -33,6 +33,7 @@ public class Lexer implements ILexer {
         HAVE_NUMBERSIGN,
         HAVE_BITAND,
         HAVE_LSQUARE,
+        HAVE_LT,
 
     }
 
@@ -90,22 +91,44 @@ public class Lexer implements ILexer {
 
 
                             }
-                            case'{'->{
-                                char[] source = Arrays.copyOfRange(chars, previous, pos+count);
-                                previous = pos;
-                                return new Token(LPAREN, previous, 1, source, new SourceLocation(line, column));
-                            }
-                           /* case '#'-> {
+                            case'?'->{
+                                char[] source = Arrays.copyOfRange(chars, pos, pos+count);
                                 pos++;
-                                state = STATE.HAVE_NUMBERSIGN;}*/
+                                return new Token(QUESTION, 0, 1, source, new SourceLocation(line, column));
+
+                            }
+                            case'{'->{
+                                char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                                pos++;
+                                return new Token(LPAREN, 0, 1, source, new SourceLocation(line, column));
+                            }
+                           case '#'-> {
+
+                                state = STATE.HAVE_NUMBERSIGN;}
                             case '&' -> {
                                 state = STATE.HAVE_BITAND;
                             }
+                            case '/'->{
+                                char[] source = Arrays.copyOfRange(chars,pos, pos+count);
+                                pos++;
+                                return new Token(DIV, 0, 1, source, new SourceLocation(line, column));
+
+                            }
+                            case'!'->{
+
+                                char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                                pos++;
+                                return new Token(BANG, 0, 1, source, new SourceLocation(line, column));}
+                            case';'->{
+
+                                char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                                pos++;
+                                return new Token(SEMI, 0, 1, source, new SourceLocation(line, column));}
                             case'}'->{
 
-                                char[] source = Arrays.copyOfRange(chars, previous, pos+count);
-                                previous = pos;
-                                return new Token(RPAREN, previous, 1, source, new SourceLocation(line, column));
+                                char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                                pos++;
+                                return new Token(RPAREN, 0, 1, source, new SourceLocation(line, column));
                             }
                             case ',' -> {
                                 //before return token, need to count pos, get source, and renew previous
@@ -115,7 +138,7 @@ public class Lexer implements ILexer {
                                 char[] source = Arrays.copyOfRange(chars, pos, pos+count);
                                 pos++;
 
-                                return new Token(COMMA,pos-count, 1, source, new SourceLocation(line, column));
+                                return new Token(COMMA,0, 1, source, new SourceLocation(line, column));
 
                             }
                             case '[' -> {
@@ -127,51 +150,52 @@ public class Lexer implements ILexer {
 
                                 char[] source = Arrays.copyOfRange(chars, pos, pos+count);
                                 pos++;
-                                return new Token(RSQUARE, pos-count, 1, source, new SourceLocation(line, column));
+                                return new Token(RSQUARE, 0, 1, source, new SourceLocation(line, column));
                             }
                             case '%' -> {
 
                                 char[] source = Arrays.copyOfRange(chars, pos,pos+count);
                                 pos++;
-                                return new Token(MOD, pos-count, 1, source, new SourceLocation(line, column));
+                                return new Token(MOD, 0, 1, source, new SourceLocation(line, column));
                             }
                             case '+' -> {
 
                                 char[] source = Arrays.copyOfRange(chars, pos, pos+count);
                                 pos++;
 
-                                return new Token(PLUS,pos-count, 1, source, new SourceLocation(line, column));
+                                return new Token(PLUS,0, 1, source, new SourceLocation(line, column));
+                            }
+                            case '<'->{
+
+                                state=STATE.HAVE_LT;
                             }
                         }
 
 
                     }
-                  /*  case HAVE_NUMBERSIGN -> {
-                        ch = (pos < chars.length) ? chars[pos] : '\0';
+                   case HAVE_NUMBERSIGN -> {
+                        ch = (pos++ < chars.length) ? chars[pos++] : '\0';
                         if(ch=='#'){
                             while(ch!='\n'){
                             pos++;
                             ch = (pos < chars.length) ? chars[pos] : '\0';
-                            if(ch=='0'){
+                            if(ch=='\0'){
                                 return new Token(EOF,pos,0,null,new SourceLocation(line,column));
                             }
                             column++;
-
-
                             }
                             line++;
                             column=1;
                             pos++;
-                            previous=pos;
+
                             state=STATE.START;
-                            throw new LexicalException();
 
                         }
                         else{
-                            previous=pos;
-                            state=STATE.START;
+
+                            pos++;
                             throw new LexicalException();}
-                    }*/
+                    }
                     case HAVE_BITAND -> {
                         if(chars[pos+1]=='&'){
                                 ch=chars[pos+1];
@@ -197,14 +221,54 @@ public class Lexer implements ILexer {
                         if (ch == ']') {
                             char[] source = Arrays.copyOfRange(chars, pos, pos+count);
                             pos=pos+count;
-                            return new Token(BOX, pos-count, 2, source, new SourceLocation(line, column));
+                            return new Token(BOX, 0, 2, source, new SourceLocation(line, column));
                         } else {
                             char[] source = Arrays.copyOfRange(chars, pos, pos+count-1);
                             column--;
                             pos++;
-                            return new Token(LSQUARE, pos-1, 1, source, new SourceLocation(line, column));
+                            return new Token(LSQUARE, 0, 1, source, new SourceLocation(line, column));
 
                         }
+                    }
+                    case HAVE_LT -> {
+
+                        ch=chars[pos+1];
+                        if(ch=='<'){
+                            column++;
+                            ch=chars[pos+2];
+                            if(ch==':'){
+                                char[] source = Arrays.copyOfRange(chars, pos, pos+1);
+
+                                pos=pos+1;
+                                return new Token(LT, 0, 1, source, new SourceLocation(line, column));
+                            }
+                            else if(ch=='='){
+                                char[] source = Arrays.copyOfRange(chars, pos, pos+1);
+                                pos=pos+1;
+                                return new Token(LT,0,1,source,new SourceLocation(line,column));
+                            }
+                            else{
+                                char[] source = Arrays.copyOfRange(chars, pos, pos+1);
+                                pos=pos+1;
+                                return new Token(LT,0,1,source,new SourceLocation(line,column));
+                            }
+                        }
+                        else if( ch=='='){
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+2);
+                            pos=pos+2;
+                            return new Token(LE,0,2,source,new SourceLocation(line,column));
+                        }
+                        else if(ch==':'){
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+2);
+                            pos=pos+2;
+                            return new Token(BLOCK_OPEN,0,2,source,new SourceLocation(line,column));
+                        }
+                        else {
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+1);
+                            pos++;
+                            return new Token(LT,0,1,source,new SourceLocation(line,column));}
                     }
 
 
