@@ -238,8 +238,8 @@ class LexerTest {
 		checkToken(BOX, lexer.next());
 		checkToken(MOD, lexer.next());
 		checkToken(PLUS, lexer.next());
-	}	
-	
+	}
+
 
 
 	@Test
