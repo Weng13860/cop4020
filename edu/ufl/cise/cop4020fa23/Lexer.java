@@ -37,7 +37,7 @@ public class Lexer implements ILexer {
         HAVE_LT,
         HAVE_ASSIGN,
         HAVE_STRING,
-
+        IDENT,
     }
 
 
@@ -53,7 +53,29 @@ public class Lexer implements ILexer {
 
     }
 
-
+    private Kind getKindForIdent(String ident) {
+        switch (ident) {
+            case "RED", "BLACK", "Z", "BLUE", "CYAN", "DARK_GRAY", "GRAY", "GREEN", "LIGHT_GRAY", "MAGENTA", "ORANGE", "PINK", "WHITE", "YELLOW": return CONST;
+            case "if": return RES_if;
+            case "fi": return RES_fi;
+            case "od": return RES_od;
+            case "do": return RES_do;
+            case "red": return RES_red;
+            case "blue": return RES_blue;
+            case "green": return RES_green;
+            case "nil": return RES_nil;
+            case "image": return RES_image;
+            case "int": return RES_int;
+            case "string": return RES_string;
+            case "pixel": return RES_pixel;
+            case "boolean": return RES_boolean;
+            case "void": return RES_void;
+            case "width": return RES_width;
+            case "height": return RES_height;
+            case "write": return RES_write;
+            default: return IDENT;
+        }
+    }
 
     @Override
     public IToken next() throws LexicalException {
@@ -186,9 +208,24 @@ public class Lexer implements ILexer {
                             case '"'->{
                                 state=STATE.HAVE_STRING;
                             }
+                            case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'->{
+                                state=STATE.IDENT;
+                            }
                         }
 
 
+                    }
+                    case IDENT->{
+                        StringBuilder sb = new StringBuilder();
+                        while (Character.isLetter(ch) || ch == '_') {  // capture full identifier
+                            sb.append(ch);
+                            pos++;
+                            ch = (pos < chars.length) ? chars[pos] : '\0';
+                        }
+                        String identStr = sb.toString();
+                        Kind kind = getKindForIdent(identStr);  // check if identifier is keyword
+                        char[] source = identStr.toCharArray();
+                        return new Token(kind, 0, identStr.length(), source, new SourceLocation(line, column - identStr.length() + 1));
                     }
                     case HAVE_STRING -> {
                         while(chars[pos+count]!='"'){
