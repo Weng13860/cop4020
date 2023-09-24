@@ -36,6 +36,7 @@ public class Lexer implements ILexer {
         HAVE_LSQUARE,
         HAVE_LT,
         HAVE_ASSIGN,
+        HAVE_STRING,
 
     }
 
@@ -51,6 +52,7 @@ public class Lexer implements ILexer {
         else {return false;}
 
     }
+
 
 
     @Override
@@ -181,10 +183,26 @@ public class Lexer implements ILexer {
                             case'-'->{
                                 state=STATE.HAVE_MINUS;
                             }
+                            case '"'->{
+                                state=STATE.HAVE_STRING;
+                            }
                         }
 
 
                     }
+                    case HAVE_STRING -> {
+                        while(chars[pos+count]!='"'){
+                            count++;
+                        }
+                        count=count+1;
+                        char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                        pos=pos+count;
+                        //char []newSource=new char[source.length+1];
+                        // System.arraycopy(source, 0, newSource, 0, source.length);
+                        // newSource[source.length] = '\n';
+                        //source = newSource;
+                        return new Token(STRING_LIT, 0, count, source, new SourceLocation(line, column-1));}
+
                     case HAVE_MINUS -> {
                         if(chars[pos+1]=='>'){
                             ch=chars[pos+1];
