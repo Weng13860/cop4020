@@ -336,7 +336,7 @@ class LexerTest {
 		checkToken(CONST,"BLACK", lexer.next());
 		checkEOF(lexer.next());
 	}
-	
+
 	@Test
 	void test8a() throws LexicalException {
 		String input = """
@@ -350,64 +350,64 @@ class LexerTest {
 		checkToken(CONST,"RED", lexer.next());
 		checkEOF(lexer.next());
 	}
-	
-//	@Test
-//	void test9() throws LexicalException {
-//		String input = """
-//				if fi
-//				od do
-//				red blue green
-//				nil
-//				image int string pixel boolean
-//				void 
-//				width height
-//				write
-//				DARK_GRAY MAGENTA Z
-//				""";
-//		ILexer lexer = ComponentFactory.makeLexer(input);
-//		checkToken(RES_if, "if", lexer.next());
-//		checkToken(RES_fi, "fi", lexer.next());
-//		checkToken(RES_od, "od", lexer.next());
-//		checkToken(RES_do, "do", lexer.next());
-//		checkToken(RES_red, "red", lexer.next());
-//		checkToken(RES_blue, "blue", lexer.next());
-//		checkToken(RES_green, "green", lexer.next());
-//		checkToken(RES_nil, "nil", lexer.next());
-//		checkToken(RES_image, "image", lexer.next());
-//		checkToken(RES_int, "int", lexer.next());
-//		checkToken(RES_string, "string", lexer.next());
-//		checkToken(RES_pixel, "pixel", lexer.next());
-//		checkToken(RES_boolean, "boolean", lexer.next());
-//		checkToken(RES_void, "void", lexer.next());
-//		checkToken(RES_width, "width", lexer.next());
-//		checkToken(RES_height, "height", lexer.next());
-//		checkToken(RES_write, "write", lexer.next());
-//		checkToken(CONST, "DARK_GRAY", lexer.next());
-//		checkToken(CONST, "MAGENTA", lexer.next());
-//		checkToken(CONST, "Z", lexer.next());
-//	}
-//	
-//
-//	
+
+	@Test
+	void test9() throws LexicalException {
+		String input = """
+				if fi
+				od do
+				red blue green
+				nil
+				image int string pixel boolean
+				void
+				width height
+				write
+				DARK_GRAY MAGENTA Z
+				""";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(RES_if, "if", lexer.next());
+		checkToken(RES_fi, "fi", lexer.next());
+		checkToken(RES_od, "od", lexer.next());
+		checkToken(RES_do, "do", lexer.next());
+		checkToken(RES_red, "red", lexer.next());
+		checkToken(RES_blue, "blue", lexer.next());
+		checkToken(RES_green, "green", lexer.next());
+		checkToken(RES_nil, "nil", lexer.next());
+		checkToken(RES_image, "image", lexer.next());
+		checkToken(RES_int, "int", lexer.next());
+		checkToken(RES_string, "string", lexer.next());
+		checkToken(RES_pixel, "pixel", lexer.next());
+		checkToken(RES_boolean, "boolean", lexer.next());
+		checkToken(RES_void, "void", lexer.next());
+		checkToken(RES_width, "width", lexer.next());
+		checkToken(RES_height, "height", lexer.next());
+		checkToken(RES_write, "write", lexer.next());
+		checkToken(CONST, "DARK_GRAY", lexer.next());
+		checkToken(CONST, "MAGENTA", lexer.next());
+		checkToken(CONST, "Z", lexer.next());
+	}
+
+
+
     @Test
     void test10() throws LexicalException {
     	String input = """
-    			01 010 
+    			01 010
     			""";
      	ILexer lexer = ComponentFactory.makeLexer(input);
     	checkNumLit("0",lexer.next());
     	checkNumLit("1",lexer.next());
        	checkNumLit("0",lexer.next());
-       	checkNumLit("10",lexer.next());      	
+       	checkNumLit("10",lexer.next());
     }
-    
-    
-    /** 
+
+
+    /**
      * This test shows how to write a test that will pass only if a LexicalExcption is thrown.
      * In this case, the number 9999999999999999999999999999999999999999 is too big.
-     * 
-     * Note that correct tokens before the token with the error should be returned normally. 
-     * 
+     *
+     * Note that correct tokens before the token with the error should be returned normally.
+     *
      * @throws LexicalException
      */
     @Test
@@ -421,11 +421,11 @@ class LexerTest {
 			lexer.next();
 		});
     }
-    
+
     @Test
     void test12() throws LexicalException {
     	String input = """
-    			"hello" 
+    			"hello"
     			"abc"
     			"abcde@#$%"
     			""";
@@ -433,9 +433,9 @@ class LexerTest {
     	checkString("hello", lexer.next());
     	checkString("abc", lexer.next());
     	checkString("abcde@#$%", lexer.next());
-    	checkEOF(lexer.next());    			
+    	checkEOF(lexer.next());
     }
-    
+
     @Test
     void test13() throws LexicalException {
     	String input = "\n\r\n";
@@ -443,7 +443,7 @@ class LexerTest {
        	checkEOF(lexer.next());
        	checkEOF(lexer.next());
     }
-    
+
     @Test
     void test14() throws LexicalException {
     	String input = """
@@ -457,7 +457,7 @@ class LexerTest {
      	checkIdent("abc123", lexer.next());
      	checkEOF(lexer.next());
     }
-    
+
     @Test
     void test15() throws LexicalException {
     	String input = """
@@ -472,7 +472,7 @@ class LexerTest {
     	checkString("abc123+123abc##1233435", lexer.next());
     	checkEOF(lexer.next());
     	checkEOF(lexer.next());
-    	
+
     }
 
     @Test
@@ -482,11 +482,11 @@ class LexerTest {
     			""";
        	ILexer lexer = ComponentFactory.makeLexer(input);
     	checkIdent("a",lexer.next());
-    	checkToken(LSQUARE,lexer.next());   	
+    	checkToken(LSQUARE,lexer.next());
     	checkIdent("b",lexer.next());
-       	checkToken(COMMA,lexer.next());   	
+       	checkToken(COMMA,lexer.next());
        	checkIdent("c",lexer.next());
-       	checkToken(RSQUARE,lexer.next());   	
+       	checkToken(RSQUARE,lexer.next());
     }
     //throws exception
     @Test
@@ -501,7 +501,7 @@ class LexerTest {
 		});
 		show("Error message from test17: " + e.getMessage());
     }
-    
+
     //throws exception
     @Test
     void test18() throws Exception {
@@ -515,7 +515,7 @@ class LexerTest {
 		});
 		show("Error message from test18: " + e.getMessage());
     }
-    
+
     //throws exception
     @Test
     void test19() throws Exception {
@@ -531,7 +531,7 @@ class LexerTest {
 		});
 		show("Error message from test19: " + e.getMessage());
     }
-    
+
     @Test
     void test20() throws Exception {
     	String input = """
@@ -543,6 +543,6 @@ class LexerTest {
      	checkToken(BOOLEAN_LIT, "TRUE", lexer.next());
      	checkIdent("True",lexer.next());
      	checkIdent("false",lexer.next());
-     	checkIdent("true",lexer.next());     	
+     	checkIdent("true",lexer.next());
     }
 }
