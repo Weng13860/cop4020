@@ -38,6 +38,7 @@ public class Lexer implements ILexer {
         HAVE_ASSIGN,
         HAVE_STRING,
         IDENT,
+        NUM,
     }
 
 
@@ -211,13 +212,27 @@ public class Lexer implements ILexer {
                             case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'->{
                                 state=STATE.IDENT;
                             }
+                            case '1', '2', '3', '4', '5', '6', '7', '8', '9'->{
+                                state=STATE.NUM;
+                            }
                         }
 
 
                     }
+                    case NUM->{
+                        StringBuilder sb = new StringBuilder();
+                        while(Character.isDigit(ch)){
+                            sb.append(ch);
+                            pos++;
+                            ch = (pos < chars.length) ? chars[pos] : '\0';
+                        }
+                        String identStr = sb.toString();
+                        char[] source = identStr.toCharArray();
+                        return new Token(NUM_LIT, 0, identStr.length(), source, new SourceLocation(line, column - identStr.length() + 1));
+                    }
                     case IDENT->{
                         StringBuilder sb = new StringBuilder();
-                        while (Character.isLetter(ch) || ch == '_') {  // capture full identifier
+                        while (Character.isLetter(ch) || ch == '_' || Character.isDigit(ch)) {  // capture full identifier
                             sb.append(ch);
                             pos++;
                             ch = (pos < chars.length) ? chars[pos] : '\0';
