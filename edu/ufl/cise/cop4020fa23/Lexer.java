@@ -32,8 +32,10 @@ public class Lexer implements ILexer {
         START,
         HAVE_NUMBERSIGN,
         HAVE_BITAND,
+        HAVE_MINUS,
         HAVE_LSQUARE,
         HAVE_LT,
+        HAVE_ASSIGN,
 
     }
 
@@ -159,20 +161,73 @@ public class Lexer implements ILexer {
                                 return new Token(MOD, 0, 1, source, new SourceLocation(line, column));
                             }
                             case '+' -> {
-
-                                char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                                char[] source = Arrays.copyOfRange(chars, pos,pos+count);
                                 pos++;
+                                return new Token(PLUS, 0, 1, source, new SourceLocation(line, column));
 
-                                return new Token(PLUS,0, 1, source, new SourceLocation(line, column));
                             }
                             case '<'->{
 
                                 state=STATE.HAVE_LT;
                             }
+                            case'>'->{
+                                char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                                pos++;
+                                return new Token(GT, 0, 1, source, new SourceLocation(line, column));
+                            }
+                            case'='->{
+                                state=STATE.HAVE_ASSIGN;
+                            }
+                            case'-'->{
+                                state=STATE.HAVE_MINUS;
+                            }
                         }
 
 
                     }
+                    case HAVE_MINUS -> {
+                        if(chars[pos+1]=='>'){
+                            ch=chars[pos+1];
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                            pos=pos+count;
+                            //char []newSource=new char[source.length+1];
+                            // System.arraycopy(source, 0, newSource, 0, source.length);
+                            // newSource[source.length] = '\n';
+                            //source = newSource;
+                            return new Token(RARROW, 0, count, source, new SourceLocation(line, column-1));}
+
+                        else {
+                            count--;
+                            char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                            pos++;
+                            column--;
+
+                            return new Token(MINUS, 0, 1, source, new SourceLocation(line, column));
+                        }
+
+                    }
+                    case HAVE_ASSIGN -> {
+                        if(chars[pos+1]=='='){
+                            ch=chars[pos+1];
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                            pos=pos+count;
+                            //char []newSource=new char[source.length+1];
+                            // System.arraycopy(source, 0, newSource, 0, source.length);
+                            // newSource[source.length] = '\n';
+                            //source = newSource;
+                            return new Token(EQ, 0, count, source, new SourceLocation(line, column-1));}
+
+                        else {
+                            count--;
+                            char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                            pos++;
+                            column--;
+
+                            return new Token(ASSIGN, 0, 1, source, new SourceLocation(line, column));
+                        }
+
+                    }
+
                    case HAVE_NUMBERSIGN -> {
                         ch = (pos++ < chars.length) ? chars[pos++] : '\0';
                         if(ch=='#'){
