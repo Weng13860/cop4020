@@ -410,27 +410,7 @@ public class Lexer implements ILexer {
                     case HAVE_LT -> {
 
                         ch=chars[pos+1];
-                        if(ch=='<'){
-                            column++;
-                            ch=chars[pos+2];
-                            if(ch==':'){
-                                char[] source = Arrays.copyOfRange(chars, pos, pos+1);
-
-                                pos=pos+1;
-                                return new Token(BLOCK_OPEN, 0, 1, source, new SourceLocation(line, column));
-                            }
-                            else if(ch=='='){
-                                char[] source = Arrays.copyOfRange(chars, pos, pos+1);
-                                pos=pos+1;
-                                return new Token(LT,0,1,source,new SourceLocation(line,column));
-                            }
-                            else{
-                                char[] source = Arrays.copyOfRange(chars, pos, pos+1);
-                                pos=pos+1;
-                                return new Token(LT,0,1,source,new SourceLocation(line,column));
-                            }
-                        }
-                        else if( ch=='='){
+                       if( ch=='='){
                             column++;
                             char[] source = Arrays.copyOfRange(chars, pos, pos+2);
                             pos=pos+2;
