@@ -33,6 +33,7 @@ public class Lexer implements ILexer {
         HAVE_NUMBERSIGN,
         HAVE_BITAND,
         HAVE_MINUS,
+        HAVE_TIMES,
         HAVE_LSQUARE,
         HAVE_LT,
         HAVE_ASSIGN,
@@ -198,6 +199,11 @@ public class Lexer implements ILexer {
                                 pos++;
                                 return new Token(GT, 0, 1, source, new SourceLocation(line, column));
                             }
+                            case '^'->{
+                                char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                                pos++;
+                                return new Token(RETURN, 0, 1, source, new SourceLocation(line, column));
+                            }
                             case'='->{
                                 state=STATE.HAVE_ASSIGN;
                             }
@@ -220,6 +226,19 @@ public class Lexer implements ILexer {
                             }
                             case '@'->{
                                 throw new LexicalException("Unrecognized symbol");
+                            }
+                            case ':'->{
+                                char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                                pos++;
+                                return new Token(BLOCK_CLOSE, 0, 2, source, new SourceLocation(line, column));
+                            }
+                            case '*'->{
+                                state=STATE.HAVE_TIMES;
+                            }
+                            case '|'->{
+                                char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                                pos++;
+                                return new Token(OR, 0, 1, source, new SourceLocation(line, column));
                             }
                         }
 
@@ -269,8 +288,25 @@ public class Lexer implements ILexer {
                         // System.arraycopy(source, 0, newSource, 0, source.length);
                         // newSource[source.length] = '\n';
                         //source = newSource;
-                        return new Token(STRING_LIT, 0, count, source, new SourceLocation(line, column-1));}
+                        return new Token(STRING_LIT, 0, count, source, new SourceLocation(line, column-1));
+                    }
 
+                    case HAVE_TIMES -> {
+                        if(chars[pos+1]=='*'){
+                            ch=chars[pos+1];
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                            pos=pos+count;
+                            return new Token(EXP, 0, count, source, new SourceLocation(line, column-1));}
+
+                        else {
+                            count--;
+                            char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                            pos++;
+                            column--;
+
+                            return new Token(TIMES, 0, 1, source, new SourceLocation(line, column));
+                        }
+                    }
                     case HAVE_MINUS -> {
                         if(chars[pos+1]=='>'){
                             ch=chars[pos+1];
@@ -381,7 +417,7 @@ public class Lexer implements ILexer {
                                 char[] source = Arrays.copyOfRange(chars, pos, pos+1);
 
                                 pos=pos+1;
-                                return new Token(LT, 0, 1, source, new SourceLocation(line, column));
+                                return new Token(BLOCK_OPEN, 0, 1, source, new SourceLocation(line, column));
                             }
                             else if(ch=='='){
                                 char[] source = Arrays.copyOfRange(chars, pos, pos+1);
@@ -409,10 +445,9 @@ public class Lexer implements ILexer {
                         else {
                             char[] source = Arrays.copyOfRange(chars, pos, pos+1);
                             pos++;
-                            return new Token(LT,0,1,source,new SourceLocation(line,column));}
+                            return new Token(LT,0,1,source,new SourceLocation(line,column));
+                        }
                     }
-
-
                 }
             }
         }
