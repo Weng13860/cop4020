@@ -30,7 +30,10 @@ public class Lexer implements ILexer {
 
     public enum STATE {
         START,
+        HAVE_ZERO,
         HAVE_NUMBERSIGN,
+        HAVE_BITOR,
+        HAVE_COLON,
         HAVE_BITAND,
         HAVE_MINUS,
         HAVE_TIMES,
@@ -40,6 +43,7 @@ public class Lexer implements ILexer {
         HAVE_STRING,
         IDENT,
         NUM,
+        HAVE_GT,
     }
 
 
@@ -123,11 +127,12 @@ public class Lexer implements ILexer {
                                 return new Token(QUESTION, 0, 1, source, new SourceLocation(line, column));
 
                             }
-                            case'{'->{
+                            case'('->{
                                 char[] source = Arrays.copyOfRange(chars, pos, pos+count);
                                 pos++;
                                 return new Token(LPAREN, 0, 1, source, new SourceLocation(line, column));
                             }
+
                            case '#'-> {
 
                                 state = STATE.HAVE_NUMBERSIGN;}
@@ -150,7 +155,7 @@ public class Lexer implements ILexer {
                                 char[] source = Arrays.copyOfRange(chars, pos, pos+count);
                                 pos++;
                                 return new Token(SEMI, 0, 1, source, new SourceLocation(line, column));}
-                            case'}'->{
+                            case')'->{
 
                                 char[] source = Arrays.copyOfRange(chars, pos, pos+count);
                                 pos++;
@@ -184,6 +189,7 @@ public class Lexer implements ILexer {
                                 pos++;
                                 return new Token(MOD, 0, 1, source, new SourceLocation(line, column));
                             }
+
                             case '+' -> {
                                 char[] source = Arrays.copyOfRange(chars, pos,pos+count);
                                 pos++;
@@ -194,10 +200,14 @@ public class Lexer implements ILexer {
 
                                 state=STATE.HAVE_LT;
                             }
+
                             case'>'->{
-                                char[] source = Arrays.copyOfRange(chars, pos,pos+count);
-                                pos++;
-                                return new Token(GT, 0, 1, source, new SourceLocation(line, column));
+                                state=STATE.HAVE_GT;
+
+                            }
+                            case '*'->{
+                                state=STATE.HAVE_TIMES;
+
                             }
                             case '^'->{
                                 char[] source = Arrays.copyOfRange(chars, pos,pos+count);
@@ -213,13 +223,14 @@ public class Lexer implements ILexer {
                             case '"'->{
                                 state=STATE.HAVE_STRING;
                             }
-                            case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'->{
+                            case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r','_', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'->{
                                 state=STATE.IDENT;
                             }
                             case '1', '2', '3', '4', '5', '6', '7', '8', '9'->{
                                 state=STATE.NUM;
                             }
                             case '0'->{
+                                state=STATE.HAVE_ZERO;
                                 char[] source = Arrays.copyOfRange(chars, pos,pos+count);
                                 pos++;
                                 return new Token(NUM_LIT, 0, 1, source, new SourceLocation(line, column));
@@ -228,20 +239,46 @@ public class Lexer implements ILexer {
                                 throw new LexicalException("Unrecognized symbol");
                             }
                             case ':'->{
-                                char[] source = Arrays.copyOfRange(chars, pos,pos+count);
-                                pos++;
-                                return new Token(BLOCK_CLOSE, 0, 2, source, new SourceLocation(line, column));
-                            }
-                            case '*'->{
-                                state=STATE.HAVE_TIMES;
+                                state=STATE.HAVE_COLON;
                             }
                             case '|'->{
-                                char[] source = Arrays.copyOfRange(chars, pos,pos+count);
-                                pos++;
-                                return new Token(OR, 0, 1, source, new SourceLocation(line, column));
+                                state=STATE.HAVE_BITOR;
                             }
+
                         }
 
+
+                    }
+                    case HAVE_COLON -> {
+                        ch=chars[pos+1];
+                        if(ch=='>'){
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+2);
+                            pos=pos+2;
+                            return new Token(BLOCK_CLOSE,0,2,source,new SourceLocation(line,column));
+                        }
+                        else{
+
+                            char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                            pos++;
+                            return new Token(COLON, 0, 1, source, new SourceLocation(line, column));}
+
+
+                    }
+
+                    case HAVE_BITOR -> {
+                        ch=chars[pos+1];
+                        if(ch=='|'){
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+2);
+                            pos=pos+2;
+                            return new Token(OR,0,2,source,new SourceLocation(line,column));
+                        }
+                        else{
+
+                            char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                            pos++;
+                            return new Token(BITOR, 0, 1, source, new SourceLocation(line, column));}
 
                     }
                     case NUM->{
@@ -292,19 +329,17 @@ public class Lexer implements ILexer {
                     }
 
                     case HAVE_TIMES -> {
-                        if(chars[pos+1]=='*'){
-                            ch=chars[pos+1];
+                        ch=chars[pos+1];
+                        if (ch == '*') {
                             char[] source = Arrays.copyOfRange(chars, pos, pos+count);
                             pos=pos+count;
-                            return new Token(EXP, 0, count, source, new SourceLocation(line, column-1));}
-
-                        else {
-                            count--;
-                            char[] source = Arrays.copyOfRange(chars, pos,pos+count);
-                            pos++;
+                            return new Token(EXP, 0, 2, source, new SourceLocation(line, column));
+                        } else {
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+count-1);
                             column--;
-
+                            pos++;
                             return new Token(TIMES, 0, 1, source, new SourceLocation(line, column));
+
                         }
                     }
                     case HAVE_MINUS -> {
@@ -406,6 +441,20 @@ public class Lexer implements ILexer {
                             return new Token(LSQUARE, 0, 1, source, new SourceLocation(line, column));
 
                         }
+                    }
+                    case HAVE_GT -> {
+                        ch=chars[pos+1];
+                        if(ch=='='){
+                            column++;
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+2);
+                            pos=pos+2;
+                            return new Token(GE,0,2,source,new SourceLocation(line,column));
+                        }
+                        else{
+
+                        char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                        pos++;
+                        return new Token(GT, 0, 1, source, new SourceLocation(line, column));}
                     }
                     case HAVE_LT -> {
 
