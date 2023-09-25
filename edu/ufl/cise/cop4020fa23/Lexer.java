@@ -286,6 +286,7 @@ public class Lexer implements ILexer {
                         while(Character.isDigit(ch)) {
                             sb.append(ch);
                             pos++;
+                            column++;
                             ch = (pos < chars.length) ? chars[pos] : '\0';
                         }
                         String numberStr = sb.toString();
@@ -297,35 +298,41 @@ public class Lexer implements ILexer {
                         }
                         catch(NumberFormatException e) {
                             // if the number is greater than int limit
-                            throw new LexicalException("Num exceeds integer limit at " + new SourceLocation(line, column - numberStr.length() + 1));
+                            throw new LexicalException("Num exceeds integer limit at " + new SourceLocation(line, column));
                         }
 
-                        return new Token(NUM_LIT, 0, numberStr.length(), source, new SourceLocation(line, column - numberStr.length() + 1));
+                        return new Token(NUM_LIT, 0, numberStr.length(), source, new SourceLocation(line, column-numberStr.length()-1));
                     }
                     case IDENT->{
                         StringBuilder sb = new StringBuilder();
                         while (Character.isLetter(ch) || ch == '_' || Character.isDigit(ch)) {  // capture full identifier
                             sb.append(ch);
                             pos++;
+                            column++;
                             ch = (pos < chars.length) ? chars[pos] : '\0';
                         }
                         String identStr = sb.toString();
                         Kind kind = getKindForIdent(identStr);  // check if identifier is keyword
                         char[] source = identStr.toCharArray();
-                        return new Token(kind, 0, identStr.length(), source, new SourceLocation(line, column - identStr.length() + 1));
+                        return new Token(kind, 0, identStr.length(), source, new SourceLocation(line, column - identStr.length() - 1));
                     }
                     case HAVE_STRING -> {
-                        while(chars[pos+count]!='"'){
+                        while(chars[pos+count]!='"') {
                             count++;
                         }
-                        count=count+1;
-                        char[] source = Arrays.copyOfRange(chars, pos, pos+count);
-                        pos=pos+count;
-                        //char []newSource=new char[source.length+1];
-                        // System.arraycopy(source, 0, newSource, 0, source.length);
-                        // newSource[source.length] = '\n';
-                        //source = newSource;
-                        return new Token(STRING_LIT, 0, count, source, new SourceLocation(line, column-1));
+                        if(chars[pos+count] != '"'){
+                            throw new LexicalException("Missing punctuation");
+                        }
+                        else{
+                            count=count+1;
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                            pos=pos+count;
+                            //char []newSource=new char[source.length+1];
+                            // System.arraycopy(source, 0, newSource, 0, source.length);
+                            // newSource[source.length] = '\n';
+                            //source = newSource;
+                            return new Token(STRING_LIT, 0, count, source, new SourceLocation(line, column-1));
+                        }
                     }
 
                     case HAVE_TIMES -> {
