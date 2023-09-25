@@ -74,6 +74,7 @@ public class Lexer implements ILexer {
             case "width": return RES_width;
             case "height": return RES_height;
             case "write": return RES_write;
+            case "FALSE", "TRUE": return BOOLEAN_LIT;
             default: return IDENT;
         }
     }
@@ -215,20 +216,33 @@ public class Lexer implements ILexer {
                             case '1', '2', '3', '4', '5', '6', '7', '8', '9'->{
                                 state=STATE.NUM;
                             }
+                            case '@'->{
+                                throw new LexicalException("Unrecognized symbol");
+                            }
                         }
 
 
                     }
                     case NUM->{
                         StringBuilder sb = new StringBuilder();
-                        while(Character.isDigit(ch)){
+                        while(Character.isDigit(ch)) {
                             sb.append(ch);
                             pos++;
                             ch = (pos < chars.length) ? chars[pos] : '\0';
                         }
-                        String identStr = sb.toString();
-                        char[] source = identStr.toCharArray();
-                        return new Token(NUM_LIT, 0, identStr.length(), source, new SourceLocation(line, column - identStr.length() + 1));
+                        String numberStr = sb.toString();
+                        char[] source = numberStr.toCharArray();
+
+                        // Check if the number exceeds Integer.MAX_VALUE
+                        try {
+                            int value = Integer.parseInt(numberStr);
+                        }
+                        catch(NumberFormatException e) {
+                            // if the number is greater than int limit
+                            throw new LexicalException("Num exceeds integer limit at " + new SourceLocation(line, column - numberStr.length() + 1));
+                        }
+
+                        return new Token(NUM_LIT, 0, numberStr.length(), source, new SourceLocation(line, column - numberStr.length() + 1));
                     }
                     case IDENT->{
                         StringBuilder sb = new StringBuilder();
