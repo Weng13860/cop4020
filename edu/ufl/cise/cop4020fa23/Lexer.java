@@ -109,15 +109,12 @@ public class Lexer implements ILexer {
                                 pos++;
                                 count--;
                             }
-                            case '\n' -> {
+                            case '\n', '\r' -> {
                                 //new line, but remain pos.
                                 line++;
                                 column = 0;
                                 pos++;
                                 count--;
-
-
-
                             }
                             case'?'->{
                                 char[] source = Arrays.copyOfRange(chars, pos, pos+count);
@@ -215,6 +212,11 @@ public class Lexer implements ILexer {
                             }
                             case '1', '2', '3', '4', '5', '6', '7', '8', '9'->{
                                 state=STATE.NUM;
+                            }
+                            case '0'->{
+                                char[] source = Arrays.copyOfRange(chars, pos,pos+count);
+                                pos++;
+                                return new Token(NUM_LIT, 0, 1, source, new SourceLocation(line, column));
                             }
                             case '@'->{
                                 throw new LexicalException("Unrecognized symbol");
