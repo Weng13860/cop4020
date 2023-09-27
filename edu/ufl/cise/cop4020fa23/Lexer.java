@@ -113,6 +113,7 @@ public class Lexer implements ILexer {
                                 //move previous also
                                 pos++;
                                 count--;
+                                //column--;
                             }
                             case '\n', '\r' -> {
                                 //new line, but remain pos.
@@ -304,17 +305,19 @@ public class Lexer implements ILexer {
                         return new Token(NUM_LIT, 0, numberStr.length(), source, new SourceLocation(line, column-numberStr.length()-1));
                     }
                     case IDENT->{
+                        column--;
                         StringBuilder sb = new StringBuilder();
                         while (Character.isLetter(ch) || ch == '_' || Character.isDigit(ch)) {  // capture full identifier
                             sb.append(ch);
                             pos++;
-                            column++;
                             ch = (pos < chars.length) ? chars[pos] : '\0';
                         }
                         String identStr = sb.toString();
+                        column+=identStr.length()-1;
+                        System.out.println("char: " + ch + " col: " + column);
                         Kind kind = getKindForIdent(identStr);  // check if identifier is keyword
                         char[] source = identStr.toCharArray();
-                        return new Token(kind, 0, identStr.length(), source, new SourceLocation(line, column - identStr.length() - 1));
+                        return new Token(kind, 0, identStr.length(), source, new SourceLocation(line, column-identStr.length()+1));
                     }
                     case HAVE_STRING -> {
                         while(chars[pos+count]!='"') {
