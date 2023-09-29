@@ -159,10 +159,7 @@ public class ExpressionParser implements IParser {
 				y=PowExpr();
 				return PowExpr();
 			}
-			else if(t.kind()!=null){
-				throw new SyntaxException("powexpr wrong1");
-			}
-			else{return AdditiveExpr();}
+			else{return x;}
 		}
 		else throw new SyntaxException("powexpr wrong2");
 	}
@@ -222,19 +219,21 @@ public class ExpressionParser implements IParser {
 		else {
 			consume();
 			y=PixelSelector();
+			if(y!=null){
+				consume();
 			z=ChannelSelector();
-			if(y==null&&z==null){
-				return new PostfixExpr(firstToken,x,null,null);
+			if(z!=null){
+				return new PostfixExpr(firstToken,x,y,z);
 			}
-			else if(y==null&&z!=null){
-				return new PostfixExpr(firstToken,x,null,z);
+				else {return new PostfixExpr(firstToken,x,y,null);}
 			}
-			else if(y!=null&&z==null){
-				return new PostfixExpr(firstToken,x,y,null);
+			else {
+				if(z!=null){
+					return new PostfixExpr(firstToken,x,null,z);
+				}
+				else return x;
 			}
-			else{return new PostfixExpr(firstToken,x,y,z);}
-
-			}
+		}
 	}
 	private ChannelSelector ChannelSelector()throws PLCCompilerException{
 		IToken firstToken = t;
