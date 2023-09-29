@@ -12,6 +12,8 @@ package edu.ufl.cise.cop4020fa23;
 import edu.ufl.cise.cop4020fa23.ast.*;
 import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
+import edu.ufl.cise.cop4020fa23.exceptions.SyntaxException;
+
 /**
 Expr::=  ConditionalExpr | LogicalOrExpr    
 ConditionalExpr ::=  ?  Expr  :  Expr  :  Expr 
@@ -48,6 +50,12 @@ public class ExpressionParser implements IParser {
 		t = lexer.next();
 	}
 
+	private boolean isPrimaryExprToken(IToken token) {
+		return token.kind() == Kind.NUM_LIT
+				|| token.kind() == Kind.STRING_LIT
+				|| token.kind() == Kind.BOOLEAN_LIT||token.kind() == Kind.IDENT||token.kind() == Kind.CONST;
+	}
+
 
 	@Override
 	public AST parse() throws PLCCompilerException {
@@ -58,23 +66,30 @@ public class ExpressionParser implements IParser {
 
 	private Expr expr() throws PLCCompilerException {
 		IToken firstToken = t;
-		switch(t.kind()){
-			case STRING_LIT -> {
-				StringLitExpr ex = new StringLitExpr(t);
-				return ex;
-			}
-			case NUM_LIT -> {
-				NumLitExpr ex = new NumLitExpr(t);
-				return ex;
-			}
-			case IDENT -> {
-				IdentExpr ex=new IdentExpr(t);
-				return ex;
-			}
-			default->{
+		if(isPrimaryExprToken(firstToken)){
+			return PrimaryExpr();
+		}
+			else{
 				throw new UnsupportedOperationException("THE PARSER HAS NOT BEEN IMPLEMENTED YET");
 			}
 		}
+
+	public Expr PrimaryExpr() throws PLCCompilerException{
+		IToken firstToken = t;
+		switch (firstToken.kind()){
+			case NUM_LIT -> {
+				return new NumLitExpr(firstToken);
+			}
+			case IDENT -> {
+				return new IdentExpr(firstToken);
+			}
+			case STRING_LIT -> {
+				return new StringLitExpr(firstToken);
+			}
+			default -> { throw new SyntaxException("aaa");
+			}
+		}
+
 	}
 
     
