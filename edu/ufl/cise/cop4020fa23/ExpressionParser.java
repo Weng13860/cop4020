@@ -86,6 +86,9 @@ public class ExpressionParser implements IParser {
 			case STRING_LIT -> {
 				return new StringLitExpr(firstToken);
 			}
+			case CONST -> {
+				return new ConstExpr(firstToken);
+			}
 			default -> { throw new SyntaxException("aaa");
 			}
 		}
