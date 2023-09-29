@@ -109,6 +109,10 @@ public class ExpressionParser implements IParser {
 
 	private Expr expr() throws PLCCompilerException {
 		IToken firstToken = t;
+		if(t.kind() == STRING_LIT){
+			StringLitExpr ex = new StringLitExpr(t);
+			return ex;
+		}
 		throw new UnsupportedOperationException("THE PARSER HAS NOT BEEN IMPLEMENTED YET");
 	}
 

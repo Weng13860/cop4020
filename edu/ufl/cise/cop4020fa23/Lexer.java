@@ -327,19 +327,20 @@ public class Lexer implements ILexer {
                     }
 
                     case HAVE_STRING -> {
+                        if(chars[pos+1] == '"'){
+                            char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                            return new Token(STRING_LIT, 0, count, source, new SourceLocation(line, column-1));
+                        }
                         while(pos + count < chars.length && chars[pos+count] != '"') {
                             count++;
                         }
-                        // no ending quotation
-                        if (pos + count >= chars.length || chars[pos+count] != '"') {
+                        if (pos + count >= chars.length || chars[pos + count] != '"') {
                             throw new LexicalException("Missing punctuation");
                         }
-                        else{
-                            count=count+1;
-                            char[] source = Arrays.copyOfRange(chars, pos, pos+count);
-                            pos=pos+count;
-                            return new Token(STRING_LIT, 0, count, source, new SourceLocation(line, column-1));
-                        }
+                        count++;
+                        char[] source = Arrays.copyOfRange(chars, pos, pos+count);
+                        pos = pos + count;
+                        return new Token(STRING_LIT, 0, count, source, new SourceLocation(line, column-1));
                     }
 
                     case HAVE_TIMES -> {
