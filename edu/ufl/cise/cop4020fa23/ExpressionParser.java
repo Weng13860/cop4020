@@ -198,35 +198,47 @@ public class ExpressionParser implements IParser {
 		IToken firstToken = t;
 		Expr x=null;
 		Expr y=null;
-		if(t.kind()!=Kind.BANG||t.kind()!=Kind.MINUS||t.kind()!=Kind.RES_width||t.kind()!=Kind.RES_height){throw new SyntaxException("UnaryExpr p");}
-		else {consume();
+		if(t.kind()!=Kind.BANG||t.kind()!=Kind.MINUS||t.kind()!=Kind.RES_width||t.kind()!=Kind.RES_height){return PostfixExpr();}
+		else{
+			consume();
 			x=UnaryExpr();
 			if(x!=null){
-				return x;}
+				return new UnaryExpr(firstToken,firstToken,x);}
 			else{
-				x=PostfixExpr();
-				if(x!=null){return x;}
-				else {
 				throw new SyntaxException("UnartEXpr2");}
-
 			}
 		}
-	}
+
 	private Expr PostfixExpr()throws PLCCompilerException{
-		if
-	}
-	private Expr ChannelSelector()throws PLCCompilerException{
-		IToken firstToken = t;
-		IToken color;
+		IToken firstToken=t;
 		Expr x=null;
+		AST y=null;
+		AST z=null;
+		x=PrimaryExpr();
+
+		if(x==null){
+			throw new SyntaxException("postErro1");}
+		else {
+			consume();
+			y=PixelSelector();
+			if(y!=null){
+				consume();
+			}
+
+		}
+
+
+	}
+	private AST ChannelSelector()throws PLCCompilerException{
+		IToken firstToken = t;
+		IToken color=null;
+		IToken x=null;
 		if(t.kind()!=Kind.COLON){throw new SyntaxException("pro ChannelS");}
 		else{
 			consume();
 			if(t.kind()==Kind.RES_green||t.kind()==Kind.RES_red||t.kind()==Kind.RES_blue){
-				color=IToken.Kind();
-
-
-				return ChannelSelector(firstToken,);
+				x=
+				return new ChannelSelector(t,x);
 			}
 		}
 	}
