@@ -71,7 +71,8 @@ public class ExpressionParser implements IParser {
 		}
 	}
 
-
+//get token and see what function we choose here, if first token is ? we use conditionalExpr. so send it to the function
+	//etc etc........but add exceptions help for debug..
 	private Expr expr() throws PLCCompilerException {
 		IToken firstToken = t;
 		if(firstToken.kind()==Kind.QUESTION){return ConditionalExpr();}
@@ -221,13 +222,19 @@ public class ExpressionParser implements IParser {
 		else {
 			consume();
 			y=PixelSelector();
-			if(y!=null){
-				consume();
+			z=ChannelSelector();
+			if(y==null&&z==null){
+				return new PostfixExpr(firstToken,x,y,z);
 			}
+			else if(y==null&&z!=null){
+				return new PostfixExpr(firstToken,x,y,z);
+			}
+			else if(y!=null&&z==null){
+				return new PostfixExpr(firstToken,x,y,z);
+			}
+			else{return new PostfixExpr(firstToken,x,y,z);}
 
-		}
-
-
+			}
 	}
 	private AST ChannelSelector()throws PLCCompilerException{
 		IToken firstToken = t;
