@@ -221,13 +221,14 @@ public class ExpressionParser implements IParser {
 			y=PixelSelector();
 			if(y!=null){
 				consume();
-			z=ChannelSelector();
-			if(z!=null){
-				return new PostfixExpr(firstToken,x,y,z);
-			}
+				z=ChannelSelector();
+				if(z!=null){
+					return new PostfixExpr(firstToken,x,y,z);}
+
 				else {return new PostfixExpr(firstToken,x,y,null);}
-			}
+					}
 			else {
+				z=ChannelSelector();
 				if(z!=null){
 					return new PostfixExpr(firstToken,x,null,z);
 				}
@@ -305,19 +306,19 @@ public class ExpressionParser implements IParser {
 	private Expr PrimaryExpr() throws PLCCompilerException{
 		IToken firstToken = t;
 		Expr y=null;
-		switch (firstToken.kind()){
+		switch (t.kind()){
 			case NUM_LIT -> {
-				y= new NumLitExpr(firstToken);
+				y= new NumLitExpr(t);
 
 			}
 			case IDENT -> {
-				y=new IdentExpr(firstToken);
+				y=new IdentExpr(t);
 			}
 			case STRING_LIT -> {
-				y= new StringLitExpr(firstToken);
+				y= new StringLitExpr(t);
 			}
 			case BOOLEAN_LIT -> {
-				y= new BooleanLitExpr(firstToken);
+				y= new BooleanLitExpr(t);
 			}
 			case LPAREN -> {
 				consume();
@@ -332,7 +333,7 @@ public class ExpressionParser implements IParser {
 				else throw new SyntaxException("error2");
 			}
 			case CONST -> {
-				y=new ConstExpr(firstToken);
+				y=new ConstExpr(t);
 			}
 			case LSQUARE -> {
 				return ExpandedPixelExpr();

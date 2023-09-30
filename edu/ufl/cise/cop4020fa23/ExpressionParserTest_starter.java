@@ -1,28 +1,15 @@
 package edu.ufl.cise.cop4020fa23;
 
+import edu.ufl.cise.cop4020fa23.ast.*;
+import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
+import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
+import edu.ufl.cise.cop4020fa23.exceptions.SyntaxException;
+import org.junit.jupiter.api.Test;
+
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import org.junit.jupiter.api.Test;
-
-import edu.ufl.cise.cop4020fa23.ast.AST;
-import edu.ufl.cise.cop4020fa23.ast.BinaryExpr;
-import edu.ufl.cise.cop4020fa23.ast.BooleanLitExpr;
-import edu.ufl.cise.cop4020fa23.ast.ChannelSelector;
-import edu.ufl.cise.cop4020fa23.ast.ConditionalExpr;
-import edu.ufl.cise.cop4020fa23.ast.ConstExpr;
-import edu.ufl.cise.cop4020fa23.ast.Expr;
-import edu.ufl.cise.cop4020fa23.ast.IdentExpr;
-import edu.ufl.cise.cop4020fa23.ast.NumLitExpr;
-import edu.ufl.cise.cop4020fa23.ast.PixelSelector;
-import edu.ufl.cise.cop4020fa23.ast.PostfixExpr;
-import edu.ufl.cise.cop4020fa23.ast.StringLitExpr;
-import edu.ufl.cise.cop4020fa23.ast.UnaryExpr;
-import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
-import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
-import edu.ufl.cise.cop4020fa23.exceptions.SyntaxException;
 
 class ExpressionParserTest_starter {
 
