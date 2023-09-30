@@ -67,7 +67,7 @@ public class ExpressionParser implements IParser {
 		try {
 			t = lexer.next();
 		} catch (LexicalException e) {
-			throw new LexicalException("aaa");
+			throw new LexicalException("No next token");
 		}
 	}
 
@@ -84,17 +84,17 @@ public class ExpressionParser implements IParser {
 		Expr y=null;
 		Expr z=null;
 		if(t.kind()!=Kind.QUESTION){
-			throw new SyntaxException("111");
+			throw new SyntaxException("No question mark");
 		}else{
 			consume();
 			x=expr();
 			if(t.kind()!=Kind.RARROW){
-				throw new SyntaxException("aaa");
+				throw new SyntaxException("No right arrow");
 			}
 			else {consume();
 				y=expr();
 				if(t.kind()!=Kind.COMMA){
-					throw new SyntaxException("bbb");}
+					throw new SyntaxException("No comma");}
 					else{
 						consume();
 						z=expr();
@@ -208,21 +208,18 @@ public class ExpressionParser implements IParser {
 		}
 		return x;
 	}
-	private Expr UnaryExpr()throws PLCCompilerException{
+	private Expr UnaryExpr() throws PLCCompilerException {
 		IToken firstToken = t;
-		Expr x=null;
-		Expr y=null;
-		x=PostfixExpr();
-		if(t.kind()!=Kind.BANG||t.kind()!=Kind.MINUS||t.kind()!=Kind.RES_width||t.kind()!=Kind.RES_height){return x;}
-		else{
+		if (t.kind() == Kind.BANG || t.kind() == Kind.MINUS || t.kind() == Kind.RES_width || t.kind() == Kind.RES_height) {
 			consume();
-			y=UnaryExpr();
-			if(y!=null){
-				return new UnaryExpr(firstToken,firstToken,y);}
-			else{
-				return x;}
+			Expr x = UnaryExpr();
+			if (x != null) {
+				return new UnaryExpr(firstToken, firstToken, x);
 			}
 		}
+		return PostfixExpr();
+	}
+
 
 	private Expr PostfixExpr()throws PLCCompilerException{
 		IToken firstToken=t;
@@ -232,7 +229,8 @@ public class ExpressionParser implements IParser {
 		x=PrimaryExpr();
 
 		if(x==null){
-			return null;}
+			return null;
+		}
 		else {
 			consume();
 			y=PixelSelector();
@@ -242,10 +240,12 @@ public class ExpressionParser implements IParser {
 
 					z=ChannelSelector();}
 				if(z!=null){
-					return new PostfixExpr(firstToken,x,y,z);}
+					return new PostfixExpr(firstToken,x,y,z);
+				}
 
-				else {return new PostfixExpr(firstToken,x,y,null);}
-					}
+				else {return new PostfixExpr(firstToken,x,y,null);
+				}
+			}
 			else {
 				if(t.kind()==Kind.COLON){
 
@@ -349,9 +349,9 @@ public class ExpressionParser implements IParser {
 					if(t.kind()==Kind.RPAREN){
 						return x;
 					}
-					else throw new SyntaxException("error1");
+					else throw new SyntaxException("No right parentheses");
 				}
-				else throw new SyntaxException("error2");
+				else throw new SyntaxException("Null expression");
 			}
 			case CONST -> {
 				y=new ConstExpr(t);
@@ -359,10 +359,8 @@ public class ExpressionParser implements IParser {
 			case LSQUARE -> {
 				return ExpandedPixelExpr();
 			}
-			case CONST -> {
-				return new ConstExpr(firstToken);
-			}
-			default -> { throw new SyntaxException("aaa");
+			default -> {
+				throw new SyntaxException("Default primary expression");
 			}
 
 		}
