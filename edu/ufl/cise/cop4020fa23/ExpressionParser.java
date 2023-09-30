@@ -110,11 +110,15 @@ public class ExpressionParser implements IParser {
 		Expr x=null;
 		Expr y=null;
 		x=LogicalAndExpr();
-		while(t.kind()==Kind.BITOR||t.kind()==Kind.OR){
-			IToken op=t;
-			consume();
-			y=LogicalAndExpr();
-			x=new BinaryExpr(firstToken,x,op,y);
+		if(x!=null) {
+
+			while(t.kind()==Kind.BITOR||t.kind()==Kind.OR) {
+				IToken op = t;
+				consume();
+				y = LogicalAndExpr();
+				x = new BinaryExpr(firstToken, x, op, y);
+			}
+			return x;
 		}
 		return x;
 
@@ -124,11 +128,15 @@ public class ExpressionParser implements IParser {
 		Expr x=null;
 		Expr y=null;
 		x=ComparsionExpr();
-		while(t.kind()==Kind.BITAND||t.kind()==Kind.AND){
-			IToken op=t;
-			consume();
-			y= ComparsionExpr();
-			x=new BinaryExpr(firstToken,x,op,y);
+		if(x!=null) {
+
+			while (t.kind() == Kind.AND || t.kind() == Kind.BITAND) {
+				IToken op = t;
+				consume();
+				y = ComparsionExpr();
+				x = new BinaryExpr(firstToken, x, op, y);
+			}
+			return x;
 		}
 		return x;
 
@@ -138,11 +146,15 @@ public class ExpressionParser implements IParser {
 		Expr x=null;
 		Expr y=null;
 		x=PowExpr();
-		while(t.kind()==Kind.GT||t.kind()==Kind.GE||t.kind()==Kind.LE||t.kind()==Kind.LT||t.kind()==Kind.EQ){
-			IToken firstleft=t;
-			consume();
-			y= PowExpr();
-			x=new BinaryExpr(firstToken,x,firstleft,y);
+		if(x!=null){
+
+			while(t.kind()==Kind.GT||t.kind()==Kind.GE||t.kind()==Kind.LE||t.kind()==Kind.LT||t.kind()==Kind.EQ){
+				IToken op=t;
+				consume();
+				y=PowExpr();
+				return new BinaryExpr(firstToken,x,op,y);
+			}
+			return x;
 		}
 		return x;
 
@@ -153,27 +165,31 @@ public class ExpressionParser implements IParser {
 		Expr y=null;
 		x=AdditiveExpr();
 		if(x!=null){
-			consume();
-			if(t.kind()==Kind.EXP){
+
+			while(t.kind()==Kind.EXP){
+				IToken op=t;
 				consume();
 				y=PowExpr();
-				return PowExpr();
+				return new BinaryExpr(firstToken,x,op,y);
 			}
-			else{return x;}
+			return x;
 		}
-		else throw new SyntaxException("powexpr wrong2");
+		return x;
 	}
 	private Expr AdditiveExpr()throws PLCCompilerException{
 		IToken firstToken = t;
 		Expr x=null;
 		Expr y=null;
 		x=MultiplicativeExpr();
+		if(x!=null){
 		while(t.kind()==Kind.PLUS||t.kind()==Kind.MINUS){
 			IToken op=t;
 			consume();
 			y=MultiplicativeExpr();
-			x=AdditiveExpr();
+			x= new BinaryExpr(firstToken,x,op,y);
 
+		}
+		return x;
 		}
 		return x;
 	}
@@ -187,7 +203,7 @@ public class ExpressionParser implements IParser {
 			IToken op=t;
 			consume();
 			y=UnaryExpr();
-			x=MultiplicativeExpr();
+			x=new BinaryExpr(firstToken,x,op,y);
 
 		}
 		return x;
@@ -196,14 +212,15 @@ public class ExpressionParser implements IParser {
 		IToken firstToken = t;
 		Expr x=null;
 		Expr y=null;
-		if(t.kind()!=Kind.BANG||t.kind()!=Kind.MINUS||t.kind()!=Kind.RES_width||t.kind()!=Kind.RES_height){return PostfixExpr();}
+		x=PostfixExpr();
+		if(t.kind()!=Kind.BANG||t.kind()!=Kind.MINUS||t.kind()!=Kind.RES_width||t.kind()!=Kind.RES_height){return x;}
 		else{
 			consume();
-			x=UnaryExpr();
-			if(x!=null){
-				return new UnaryExpr(firstToken,firstToken,x);}
+			y=UnaryExpr();
+			if(y!=null){
+				return new UnaryExpr(firstToken,firstToken,y);}
 			else{
-				throw new SyntaxException("UnartEXpr2");}
+				return x;}
 			}
 		}
 
@@ -215,7 +232,7 @@ public class ExpressionParser implements IParser {
 		x=PrimaryExpr();
 
 		if(x==null){
-			throw new SyntaxException("postErro1");}
+			return null;}
 		else {
 			consume();
 			y=PixelSelector();
@@ -328,7 +345,7 @@ public class ExpressionParser implements IParser {
 				consume();
 				Expr x=expr();
 				if(x!=null){
-					consume();
+					
 					if(t.kind()==Kind.RPAREN){
 						return x;
 					}
