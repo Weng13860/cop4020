@@ -112,7 +112,7 @@ public class ExpressionParser implements IParser {
 		x=LogicalAndExpr();
 		if(x!=null) {
 
-			if (t.kind()==Kind.BITOR||t.kind()==Kind.OR) {
+			while(t.kind()==Kind.BITOR||t.kind()==Kind.OR) {
 				IToken op = t;
 				consume();
 				y = LogicalAndExpr();
@@ -130,7 +130,7 @@ public class ExpressionParser implements IParser {
 		x=ComparsionExpr();
 		if(x!=null) {
 
-			if (t.kind() == Kind.AND || t.kind() == Kind.BITAND) {
+			while (t.kind() == Kind.AND || t.kind() == Kind.BITAND) {
 				IToken op = t;
 				consume();
 				y = ComparsionExpr();
@@ -148,15 +148,15 @@ public class ExpressionParser implements IParser {
 		x=PowExpr();
 		if(x!=null){
 
-			if(t.kind()==Kind.GT||t.kind()==Kind.GE||t.kind()==Kind.LE||t.kind()==Kind.LT||t.kind()==Kind.EQ){
+			while(t.kind()==Kind.GT||t.kind()==Kind.GE||t.kind()==Kind.LE||t.kind()==Kind.LT||t.kind()==Kind.EQ){
 				IToken op=t;
 				consume();
 				y=PowExpr();
 				return new BinaryExpr(firstToken,x,op,y);
 			}
-			else{return x;}
+			return x;
 		}
-		else return x;
+		return x;
 
 	}
 	private Expr PowExpr()throws PLCCompilerException{
@@ -166,15 +166,15 @@ public class ExpressionParser implements IParser {
 		x=AdditiveExpr();
 		if(x!=null){
 
-			if(t.kind()==Kind.EXP){
+			while(t.kind()==Kind.EXP){
 				IToken op=t;
 				consume();
 				y=PowExpr();
 				return new BinaryExpr(firstToken,x,op,y);
 			}
-			else{return x;}
+			return x;
 		}
-		else return x;
+		return x;
 	}
 	private Expr AdditiveExpr()throws PLCCompilerException{
 		IToken firstToken = t;
@@ -182,7 +182,7 @@ public class ExpressionParser implements IParser {
 		Expr y=null;
 		x=MultiplicativeExpr();
 		if(x!=null){
-		if(t.kind()==Kind.PLUS||t.kind()==Kind.MINUS){
+		while(t.kind()==Kind.PLUS||t.kind()==Kind.MINUS){
 			IToken op=t;
 			consume();
 			y=MultiplicativeExpr();
@@ -199,7 +199,7 @@ public class ExpressionParser implements IParser {
 		Expr x=null;
 		Expr y=null;
 		x=UnaryExpr();
-		if(t.kind()==Kind.TIMES||t.kind()==Kind.DIV||t.kind()==Kind.MOD){
+		while(t.kind()==Kind.TIMES||t.kind()==Kind.DIV||t.kind()==Kind.MOD){
 			IToken op=t;
 			consume();
 			y=UnaryExpr();
