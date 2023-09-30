@@ -221,14 +221,18 @@ public class ExpressionParser implements IParser {
 			y=PixelSelector();
 			if(y!=null){
 				consume();
-				z=ChannelSelector();
+				if(t.kind()==Kind.COLON){
+
+					z=ChannelSelector();}
 				if(z!=null){
 					return new PostfixExpr(firstToken,x,y,z);}
 
 				else {return new PostfixExpr(firstToken,x,y,null);}
 					}
 			else {
-				z=ChannelSelector();
+				if(t.kind()==Kind.COLON){
+
+				z=ChannelSelector();}
 				if(z!=null){
 					return new PostfixExpr(firstToken,x,null,z);
 				}
@@ -305,7 +309,7 @@ public class ExpressionParser implements IParser {
 
 	private Expr PrimaryExpr() throws PLCCompilerException{
 		IToken firstToken = t;
-		Expr y=null;
+		Expr y;
 		switch (t.kind()){
 			case NUM_LIT -> {
 				y= new NumLitExpr(t);
@@ -340,6 +344,7 @@ public class ExpressionParser implements IParser {
 			}
 			default -> { throw new SyntaxException("aaa");
 			}
+
 		}
 		return y;
 
