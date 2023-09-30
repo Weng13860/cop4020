@@ -58,40 +58,298 @@ public class ExpressionParser implements IParser {
 
 
 	@Override
-	public AST parse() throws PLCCompilerException {
+	public Expr parse() throws PLCCompilerException {
 		Expr e = expr();
 		return e;
 	}
 
+	private void consume() throws PLCCompilerException {
+		try {
+			t = lexer.next();
+		} catch (LexicalException e) {
+			throw new LexicalException("aaa");
+		}
+	}
 
+//get token and see what function we choose here, if first token is ? we use conditionalExpr. so send it to the function
+	//etc etc........but add exceptions help for debug..
 	private Expr expr() throws PLCCompilerException {
 		IToken firstToken = t;
-		if(isPrimaryExprToken(firstToken)){
-			return PrimaryExpr();
+		if(firstToken.kind()==Kind.QUESTION){return ConditionalExpr();}
+
+		else {return LogicalOrExpr();}}
+	private Expr ConditionalExpr() throws  PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		Expr z=null;
+		if(t.kind()!=Kind.QUESTION){
+			throw new SyntaxException("111");
+		}else{
+			consume();
+			x=expr();
+			if(t.kind()!=Kind.RARROW){
+				throw new SyntaxException("aaa");
+			}
+			else {consume();
+				y=expr();
+				if(t.kind()!=Kind.COMMA){
+					throw new SyntaxException("bbb");}
+					else{
+						consume();
+						z=expr();
+					}
+				}
+			}
+
+
+		return new ConditionalExpr(firstToken,x,y,z);
+	}
+	private Expr LogicalOrExpr()throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=LogicalAndExpr();
+		while(t.kind()==Kind.BITOR||t.kind()==Kind.OR){
+			IToken op=t;
+			consume();
+			y=LogicalAndExpr();
+			x=new BinaryExpr(firstToken,x,op,y);
 		}
+		return x;
+
+	}
+	private Expr LogicalAndExpr()throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=ComparsionExpr();
+		while(t.kind()==Kind.BITAND||t.kind()==Kind.AND){
+			IToken op=t;
+			consume();
+			y= ComparsionExpr();
+			x=new BinaryExpr(firstToken,x,op,y);
+		}
+		return x;
+
+	}
+	private Expr ComparsionExpr() throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=PowExpr();
+		while(t.kind()==Kind.GT||t.kind()==Kind.GE||t.kind()==Kind.LE||t.kind()==Kind.LT||t.kind()==Kind.EQ){
+			IToken firstleft=t;
+			consume();
+			y= PowExpr();
+			x=new BinaryExpr(firstToken,x,firstleft,y);
+		}
+		return x;
+
+	}
+	private Expr PowExpr()throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=AdditiveExpr();
+		if(x!=null){
+			consume();
+			if(t.kind()==Kind.EXP){
+				consume();
+				y=PowExpr();
+				return PowExpr();
+			}
+			else{return x;}
+		}
+		else throw new SyntaxException("powexpr wrong2");
+	}
+	private Expr AdditiveExpr()throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=MultiplicativeExpr();
+		while(t.kind()==Kind.PLUS||t.kind()==Kind.MINUS){
+			IToken op=t;
+			consume();
+			y=MultiplicativeExpr();
+			x=AdditiveExpr();
+
+		}
+		return x;
+	}
+	private Expr MultiplicativeExpr()throws PLCCompilerException{
+
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=UnaryExpr();
+		while(t.kind()==Kind.TIMES||t.kind()==Kind.DIV||t.kind()==Kind.MOD){
+			IToken op=t;
+			consume();
+			y=UnaryExpr();
+			x=MultiplicativeExpr();
+
+		}
+		return x;
+	}
+	private Expr UnaryExpr()throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		if(t.kind()!=Kind.BANG||t.kind()!=Kind.MINUS||t.kind()!=Kind.RES_width||t.kind()!=Kind.RES_height){return PostfixExpr();}
+		else{
+			consume();
+			x=UnaryExpr();
+			if(x!=null){
+				return new UnaryExpr(firstToken,firstToken,x);}
 			else{
-				throw new UnsupportedOperationException("THE PARSER HAS NOT BEEN IMPLEMENTED YET");
+				throw new SyntaxException("UnartEXpr2");}
 			}
 		}
 
-	public Expr PrimaryExpr() throws PLCCompilerException{
+	private Expr PostfixExpr()throws PLCCompilerException{
+		IToken firstToken=t;
+		Expr x=null;
+		PixelSelector y=null;
+		ChannelSelector z=null;
+		x=PrimaryExpr();
+
+		if(x==null){
+			throw new SyntaxException("postErro1");}
+		else {
+			consume();
+			y=PixelSelector();
+			if(y!=null){
+				consume();
+				if(t.kind()==Kind.COLON){
+
+					z=ChannelSelector();}
+				if(z!=null){
+					return new PostfixExpr(firstToken,x,y,z);}
+
+				else {return new PostfixExpr(firstToken,x,y,null);}
+					}
+			else {
+				if(t.kind()==Kind.COLON){
+
+				z=ChannelSelector();}
+				if(z!=null){
+					return new PostfixExpr(firstToken,x,null,z);
+				}
+				else return x;
+			}
+		}
+	}
+	private ChannelSelector ChannelSelector()throws PLCCompilerException{
 		IToken firstToken = t;
-		switch (firstToken.kind()){
+		Kind color=null;
+		IToken x=null;
+		if(t.kind()!=Kind.COLON){throw new SyntaxException("pro ChannelS");}
+		else{
+			consume();
+			if(t.kind()==Kind.RES_green||t.kind()==Kind.RES_red||t.kind()==Kind.RES_blue){
+				x=t;
+				return new ChannelSelector(firstToken,x);
+			}
+			else throw new SyntaxException("Channels");
+		}
+	}
+
+
+
+	private Expr ExpandedPixelExpr()throws PLCCompilerException{
+		IToken firstToken=t;
+		Expr x=null;
+		Expr y=null;
+		Expr z=null;
+		if(t.kind()==Kind.LSQUARE){
+			consume();
+			x=expr();
+			if(t.kind()==Kind.COMMA){
+				consume();
+				y=expr();
+				if(t.kind()==Kind.COMMA){
+					consume();
+					z=expr();
+					if(t.kind()==Kind.RSQUARE){
+						return new ExpandedPixelExpr(firstToken,x,y,z);
+					}
+					else return null;
+				}
+				else return null;
+			}
+			else return null;
+		}
+		else return null;
+	}
+	private PixelSelector PixelSelector()throws PLCCompilerException{
+		IToken firstToken=t;
+		Expr x=null;
+		Expr y=null;
+		if(t.kind()==Kind.LSQUARE){
+			consume();
+			x=expr();
+			if(t.kind()==Kind.COMMA){
+				consume();
+				y=expr();
+				if(t.kind()==Kind.RSQUARE){
+					return new PixelSelector(firstToken,x,y);
+				}
+				else return null;
+			}
+			else return null;
+		}
+		else return null;
+	}
+
+
+
+
+
+
+	private Expr PrimaryExpr() throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr y;
+		switch (t.kind()){
 			case NUM_LIT -> {
-				return new NumLitExpr(firstToken);
+				y= new NumLitExpr(t);
+
 			}
 			case IDENT -> {
-				return new IdentExpr(firstToken);
+				y=new IdentExpr(t);
 			}
 			case STRING_LIT -> {
-				return new StringLitExpr(firstToken);
+				y= new StringLitExpr(t);
+			}
+			case BOOLEAN_LIT -> {
+				y= new BooleanLitExpr(t);
+			}
+			case LPAREN -> {
+				consume();
+				Expr x=expr();
+				if(x!=null){
+					consume();
+					if(t.kind()==Kind.RPAREN){
+						return x;
+					}
+					else throw new SyntaxException("error1");
+				}
+				else throw new SyntaxException("error2");
+			}
+			case CONST -> {
+				y=new ConstExpr(t);
+			}
+			case LSQUARE -> {
+				return ExpandedPixelExpr();
 			}
 			case CONST -> {
 				return new ConstExpr(firstToken);
 			}
 			default -> { throw new SyntaxException("aaa");
 			}
+
 		}
+		return y;
 
 	}
 
