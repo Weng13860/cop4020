@@ -66,8 +66,8 @@ public class ExpressionParser implements IParser {
 	private void consume() throws PLCCompilerException {
 		try {
 			t = lexer.next();
-		} catch (Exception e) {
-			System.out.println("nonononono");
+		} catch (LexicalException e) {
+			throw new LexicalException("aaa");
 		}
 	}
 
