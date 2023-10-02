@@ -291,7 +291,7 @@ public class ExpressionParser implements IParser {
 					if(t.kind()==Kind.RSQUARE){
 						return new ExpandedPixelExpr(firstToken,x,y,z);
 					}
-					else return null;
+					else throw new SyntaxException("Missing bracket");
 				}
 				else return null;
 			}
@@ -299,29 +299,28 @@ public class ExpressionParser implements IParser {
 		}
 		else return null;
 	}
-	private PixelSelector PixelSelector()throws PLCCompilerException{
-		IToken firstToken=t;
-		Expr x=null;
-		Expr y=null;
-		if(t.kind()==Kind.LSQUARE){
+	private PixelSelector PixelSelector() throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr x = null;
+		Expr y = null;
+
+		if (t.kind() == Kind.LSQUARE) {
 			consume();
-			x=expr();
-			if(t.kind()==Kind.COMMA){
+			x = expr();
+
+			if (t.kind() == Kind.COMMA) {
 				consume();
-				y=expr();
-				if(t.kind()==Kind.RSQUARE){
-					return new PixelSelector(firstToken,x,y);
+				y = expr();
+
+				if (t.kind() == Kind.RSQUARE) {
+					return new PixelSelector(firstToken, x, y);
+				} else {
+					throw new SyntaxException("Missing closing bracket");
 				}
-				else return null;
 			}
-			else return null;
 		}
-		else return null;
+		return null;
 	}
-
-
-
-
 
 
 	private Expr PrimaryExpr() throws PLCCompilerException{

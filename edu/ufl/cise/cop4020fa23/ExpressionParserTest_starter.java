@@ -45,7 +45,7 @@ class ExpressionParserTest_starter {
 	 * value. For convenience, we do not require the value to include the enclosing
 	 * quotes. So we can write checkStringLitExpr(ast, "hello") rather than
 	 * checkStringLitExpr(ast,""hello"");
-	 *
+	 * <p>
 	 * Returns the given AST cast to StringLitExpr.
 	 *
 	 * @param e
@@ -64,7 +64,7 @@ class ExpressionParserTest_starter {
 
 	/**
 	 * Checks that the given AST has type BooleanLitExpr and represents the given boolean value
-	 * 
+	 *
 	 * @param e
 	 * @param value
 	 * @return
@@ -445,6 +445,254 @@ class ExpressionParserTest_starter {
 			@SuppressWarnings("unused")
 			AST ast = getAST(input);
 		});
+	}
+
+	@Test
+	void unitTestLogicOrExpression() throws PLCCompilerException {
+		String input = """
+				x || y
+				""";
+		AST ast = getAST(input);
+		BinaryExpr expr = checkBinaryExpr(ast, Kind.OR);
+		checkIdentExpr(expr.getLeftExpr(), "x");
+		checkIdentExpr(expr.getRightExpr(), "y");
+	}
+
+
+	@Test
+	void unitTestLogicBitOrExpression() throws PLCCompilerException {
+		String input = """
+				x | y
+				""";
+		AST ast = getAST(input);
+		BinaryExpr expr = checkBinaryExpr(ast, Kind.BITOR);
+		checkIdentExpr(expr.getLeftExpr(), "x");
+		checkIdentExpr(expr.getRightExpr(), "y");
+	}
+
+
+	@Test
+	void unitTestLogicAndExpression() throws PLCCompilerException {
+		String input = """
+				x && y
+				""";
+		AST ast = getAST(input);
+		BinaryExpr expr = checkBinaryExpr(ast, Kind.AND);
+		checkIdentExpr(expr.getLeftExpr(), "x");
+		checkIdentExpr(expr.getRightExpr(), "y");
+	}
+
+
+	@Test
+	void unitTestLogicBitAndExpression() throws PLCCompilerException {
+		String input = """
+				x & y
+				""";
+		AST ast = getAST(input);
+		BinaryExpr expr = checkBinaryExpr(ast, Kind.BITAND);
+		checkIdentExpr(expr.getLeftExpr(), "x");
+		checkIdentExpr(expr.getRightExpr(), "y");
+	}
+
+
+	@Test
+	void unitTestNestedAndOrExpression() throws PLCCompilerException {
+		String input = """
+				x || y && z
+				""";
+		AST ast = getAST(input);
+		BinaryExpr expr = checkBinaryExpr(ast, Kind.OR);
+		checkIdentExpr(expr.getLeftExpr(), "x");
+		BinaryExpr innerExpr = checkBinaryExpr(expr.getRightExpr(), Kind.AND);
+		checkIdentExpr(innerExpr.getLeftExpr(), "y");
+		checkIdentExpr(innerExpr.getRightExpr(), "z");
+	}
+
+
+	@Test
+	void unitTestLtExpression() throws PLCCompilerException {
+		String input = """
+				x < y
+				""";
+		AST ast = getAST(input);
+		BinaryExpr expr = checkBinaryExpr(ast, Kind.LT);
+		checkIdentExpr(expr.getLeftExpr(), "x");
+		checkIdentExpr(expr.getRightExpr(), "y");
+	}
+
+
+	@Test
+	void unitTestPowExpression() throws PLCCompilerException {
+		String input = """
+				x ** y
+				""";
+		AST ast = getAST(input);
+		BinaryExpr expr = checkBinaryExpr(ast, Kind.EXP);
+		checkIdentExpr(expr.getLeftExpr(), "x");
+		checkIdentExpr(expr.getRightExpr(), "y");
+	}
+
+
+	@Test
+	void unitTestWidthInUnaryExpression() throws PLCCompilerException {
+		String input = """
+				width 42
+				""";
+		AST ast = getAST(input);
+		UnaryExpr unaryWidth = checkUnaryExpr(ast, Kind.RES_width);
+		checkNumLitExpr(unaryWidth.getExpr(), 42);
+	}
+
+
+	@Test
+	void unitTestHeightInUnaryExpression() throws PLCCompilerException {
+		String input = """
+				height 42
+				""";
+		AST ast = getAST(input);
+		UnaryExpr unaryWidth = checkUnaryExpr(ast, Kind.RES_height);
+		checkNumLitExpr(unaryWidth.getExpr(), 42);
+	}
+
+
+	@Test
+	void unitTestNestedUnaryExpression() throws PLCCompilerException {
+		String input = """
+				width -42
+				""";
+		AST ast = getAST(input);
+		Expr unaryWidth = checkUnaryExpr(ast, Kind.RES_width).getExpr();
+		Expr unaryNegation = checkUnaryExpr(unaryWidth, Kind.MINUS).getExpr();
+		checkNumLitExpr(unaryNegation, 42);
+	}
+
+
+	@Test
+	void unitTestExpandedPixelExpression() throws PLCCompilerException {
+		String input = """
+				[1, 2, 3]
+				""";
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(ExpandedPixelExpr.class));
+		Expr red = ((ExpandedPixelExpr) ast).getRed();
+		Expr green = ((ExpandedPixelExpr) ast).getGreen();
+		Expr blue = ((ExpandedPixelExpr) ast).getBlue();
+		checkNumLitExpr(red, 1);
+		checkNumLitExpr(green, 2);
+		checkNumLitExpr(blue, 3);
+	}
+
+	@Test
+	void unitTestConditionalExpression() throws PLCCompilerException {
+		String input = """
+				? x&5 -> y * 2 , y - 2
+				""";
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(ConditionalExpr.class));
+		Expr guard = ((ConditionalExpr) ast).getGuardExpr();
+		Expr left = ((ConditionalExpr) ast).getTrueExpr();
+		Expr right = ((ConditionalExpr) ast).getFalseExpr();
+		checkBinaryExpr(guard, Kind.BITAND);
+		checkBinaryExpr(left, Kind.TIMES);
+		checkBinaryExpr(right, Kind.MINUS);
+	}
+
+	@Test
+	void unitTestUnaryExprOps() throws PLCCompilerException {
+		String input = """
+				!width-height(test)      
+				""";
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(UnaryExpr.class));
+		Expr unary2 = ((UnaryExpr) ast).getExpr();
+	}
+	@Test
+	void testPostfixExpression() throws PLCCompilerException {
+		String input = """
+       BLUE
+       """;
+		AST ast = getAST(input);
+		assertThat("", ast, instanceOf(ConstExpr.class));
+	}
+
+
+	@Test
+	void testPrimaryExpression() throws PLCCompilerException {
+		String input = """
+       "hello"
+       """;
+		AST ast = getAST(input);
+		StringLitExpr expr = checkStringLitExpr(ast, "hello");
+	}
+
+
+	@Test
+	void testMultiplicativeExpression() throws PLCCompilerException {
+		String input = """
+       1*2/3
+       """;
+		AST ast = getAST(input);
+		checkBinaryExpr(ast, Kind.DIV);
+		Expr v0 = ((BinaryExpr) ast).getLeftExpr();
+		checkBinaryExpr(v0, Kind.TIMES);
+		Expr v1 = ((BinaryExpr) v0).getLeftExpr();
+		checkNumLitExpr(v1, 1);
+		Expr v2 = ((BinaryExpr) v0).getRightExpr();
+		checkNumLitExpr(v2, 2);
+		Expr v3 = ((BinaryExpr) ast).getRightExpr();
+		checkNumLitExpr(v3, 3);
+	}
+
+
+	@Test
+	void testOneBracket() throws PLCCompilerException {
+		String input = """
+       [1, 2, 3
+       """;
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+
+	@Test
+	void testOneParenthesis() throws PLCCompilerException {
+		String input = """
+       (3
+       """;
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void testOneSmallBracket() throws PLCCompilerException {
+		String input = """
+           [1, 2
+           """;
+		assertThrows(SyntaxException.class, () -> {
+			@SuppressWarnings("unused")
+			AST ast = getAST(input);
+		});
+	}
+
+	@Test
+	void testParenthesisInsideChannel() throws PLCCompilerException {
+		String input = """
+         (a):red
+
+
+         """;
+		AST ast = getAST(input);
+		checkPostfixExpr(ast, false, true);
+		Expr v0 = ((PostfixExpr) ast).primary();
+		checkIdentExpr(v0, "a");
+		ChannelSelector v1 = ((PostfixExpr) ast).channel();
+		checkChannelSelector(v1, Kind.RES_red);
+
+
 	}
 
 }
