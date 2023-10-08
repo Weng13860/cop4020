@@ -1,78 +1,48 @@
 /*Copyright 2023 by Beverly A Sanders
- * 
- * This code is provided for solely for use of students in COP4020 Programming Language Concepts at the 
- * University of Florida during the fall semester 2023 as part of the course project.  
- * 
- * No other use is authorized. 
- * 
- * This code may not be posted on a public web site either during or after the course.  
+ *
+ * This code is provided for solely for use of students in COP4020 Programming Language Concepts at the
+ * University of Florida during the fall semester 2023 as part of the course project.
+ *
+ * No other use is authorized.
+ *
+ * This code may not be posted on a public web site either during or after the course.
  */
 package edu.ufl.cise.cop4020fa23;
 
-import static edu.ufl.cise.cop4020fa23.Kind.AND;
-import static edu.ufl.cise.cop4020fa23.Kind.BANG;
-import static edu.ufl.cise.cop4020fa23.Kind.BITAND;
-import static edu.ufl.cise.cop4020fa23.Kind.BITOR;
-import static edu.ufl.cise.cop4020fa23.Kind.COLON;
-import static edu.ufl.cise.cop4020fa23.Kind.COMMA;
-import static edu.ufl.cise.cop4020fa23.Kind.DIV;
-import static edu.ufl.cise.cop4020fa23.Kind.EOF;
-import static edu.ufl.cise.cop4020fa23.Kind.EQ;
-import static edu.ufl.cise.cop4020fa23.Kind.EXP;
-import static edu.ufl.cise.cop4020fa23.Kind.GE;
-import static edu.ufl.cise.cop4020fa23.Kind.GT;
-import static edu.ufl.cise.cop4020fa23.Kind.IDENT;
-import static edu.ufl.cise.cop4020fa23.Kind.LE;
-import static edu.ufl.cise.cop4020fa23.Kind.LPAREN;
-import static edu.ufl.cise.cop4020fa23.Kind.LSQUARE;
-import static edu.ufl.cise.cop4020fa23.Kind.LT;
-import static edu.ufl.cise.cop4020fa23.Kind.MINUS;
-import static edu.ufl.cise.cop4020fa23.Kind.MOD;
-import static edu.ufl.cise.cop4020fa23.Kind.NUM_LIT;
-import static edu.ufl.cise.cop4020fa23.Kind.OR;
-import static edu.ufl.cise.cop4020fa23.Kind.PLUS;
-import static edu.ufl.cise.cop4020fa23.Kind.QUESTION;
-import static edu.ufl.cise.cop4020fa23.Kind.RARROW;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_blue;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_green;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_height;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_red;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_width;
-import static edu.ufl.cise.cop4020fa23.Kind.RPAREN;
-import static edu.ufl.cise.cop4020fa23.Kind.RSQUARE;
-import static edu.ufl.cise.cop4020fa23.Kind.STRING_LIT;
-import static edu.ufl.cise.cop4020fa23.Kind.TIMES;
-import static edu.ufl.cise.cop4020fa23.Kind.CONST;
-
-import java.util.Arrays;
-
-import edu.ufl.cise.cop4020fa23.ast.AST;
-import edu.ufl.cise.cop4020fa23.ast.BinaryExpr;
-import edu.ufl.cise.cop4020fa23.ast.BooleanLitExpr;
-import edu.ufl.cise.cop4020fa23.ast.ChannelSelector;
-import edu.ufl.cise.cop4020fa23.ast.ConditionalExpr;
-import edu.ufl.cise.cop4020fa23.ast.ConstExpr;
-import edu.ufl.cise.cop4020fa23.ast.ExpandedPixelExpr;
-import edu.ufl.cise.cop4020fa23.ast.Expr;
-import edu.ufl.cise.cop4020fa23.ast.IdentExpr;
-import edu.ufl.cise.cop4020fa23.ast.NumLitExpr;
-import edu.ufl.cise.cop4020fa23.ast.PixelSelector;
-import edu.ufl.cise.cop4020fa23.ast.PostfixExpr;
-import edu.ufl.cise.cop4020fa23.ast.StringLitExpr;
-import edu.ufl.cise.cop4020fa23.ast.UnaryExpr;
+import edu.ufl.cise.cop4020fa23.ast.*;
 import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import edu.ufl.cise.cop4020fa23.exceptions.SyntaxException;
 
+/**
+ Expr::=  ConditionalExpr | LogicalOrExpr
+ ConditionalExpr ::=  ?  Expr  :  Expr  :  Expr
+ LogicalOrExpr ::= LogicalAndExpr (    (   |   |   ||   ) LogicalAndExpr)*
+ LogicalAndExpr ::=  ComparisonExpr ( (   &   |  &&   )  ComparisonExpr)*
+ ComparisonExpr ::= PowExpr ( (< | > | == | <= | >=) PowExpr)*
+ PowExpr ::= AdditiveExpr ** PowExpr |   AdditiveExpr
+ AdditiveExpr ::= MultiplicativeExpr ( ( + | -  ) MultiplicativeExpr )*
+ MultiplicativeExpr ::= UnaryExpr (( * |  /  |  % ) UnaryExpr)*
+ UnaryExpr ::=  ( ! | - | length | width) UnaryExpr  |  UnaryExprPostfix
+ UnaryExprPostfix::= PrimaryExpr (PixelSelector | ε ) (ChannelSelector | ε )
+ PrimaryExpr ::=STRING_LIT | NUM_LIT |  IDENT | ( Expr ) | Z
+ ExpandedPixel
+ ChannelSelector ::= : red | : green | : blue
+ PixelSelector  ::= [ Expr , Expr ]
+ ExpandedPixel ::= [ Expr , Expr , Expr ]
+ Dimension  ::=  [ Expr , Expr ]
+
+ */
+
 public class ExpressionParser implements IParser {
-	
+
 	final ILexer lexer;
 	private IToken t;
-	
+
 
 	/**
 	 * @param lexer
-	 * @throws LexicalException 
+	 * @throws LexicalException
 	 */
 	public ExpressionParser(ILexer lexer) throws LexicalException {
 		super();
@@ -80,19 +50,320 @@ public class ExpressionParser implements IParser {
 		t = lexer.next();
 	}
 
+	private boolean isPrimaryExprToken(IToken token) {
+		return token.kind() == Kind.NUM_LIT
+				|| token.kind() == Kind.STRING_LIT
+				|| token.kind() == Kind.BOOLEAN_LIT||token.kind() == Kind.IDENT||token.kind() == Kind.CONST;
+	}
+
 
 	@Override
-	public AST parse() throws PLCCompilerException {
+	public Expr parse() throws PLCCompilerException {
 		Expr e = expr();
 		return e;
 	}
 
-
-	private Expr expr() throws PLCCompilerException {
-		IToken firstToken = t;
-		throw new UnsupportedOperationException("THE PARSER HAS NOT BEEN IMPLEMENTED YET");
+	private void consume() throws PLCCompilerException {
+		try {
+			t = lexer.next();
+		} catch (LexicalException e) {
+			throw new LexicalException("No next token");
+		}
 	}
 
-    
+	//get token and see what function we choose here, if first token is ? we use conditionalExpr. so send it to the function
+	//etc etc........but add exceptions help for debug..
+	private Expr expr() throws PLCCompilerException {
+		IToken firstToken = t;
+		if(firstToken.kind()==Kind.QUESTION){return ConditionalExpr();}
 
+		else {return LogicalOrExpr();}}
+	private Expr ConditionalExpr() throws  PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		Expr z=null;
+		if(t.kind()!=Kind.QUESTION){
+			throw new SyntaxException("No question mark");
+		}else{
+			consume();
+			x=expr();
+			if(t.kind()!=Kind.RARROW){
+				throw new SyntaxException("No right arrow");
+			}
+			else {consume();
+				y=expr();
+				if(t.kind()!=Kind.COMMA){
+					throw new SyntaxException("No comma");}
+				else{
+					consume();
+					z=expr();
+				}
+			}
+		}
+
+
+		return new ConditionalExpr(firstToken,x,y,z);
+	}
+	private Expr LogicalOrExpr()throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=LogicalAndExpr();
+		if(x!=null) {
+
+			while(t.kind()==Kind.BITOR||t.kind()==Kind.OR) {
+				IToken op = t;
+				consume();
+				y = LogicalAndExpr();
+				x = new BinaryExpr(firstToken, x, op, y);
+			}
+			return x;
+		}
+		return x;
+
+	}
+	private Expr LogicalAndExpr()throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=ComparsionExpr();
+		if(x!=null) {
+
+			while (t.kind() == Kind.AND || t.kind() == Kind.BITAND) {
+				IToken op = t;
+				consume();
+				y = ComparsionExpr();
+				x = new BinaryExpr(firstToken, x, op, y);
+			}
+			return x;
+		}
+		return x;
+
+	}
+	private Expr ComparsionExpr() throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=PowExpr();
+		if(x!=null){
+
+			while(t.kind()==Kind.GT||t.kind()==Kind.GE||t.kind()==Kind.LE||t.kind()==Kind.LT||t.kind()==Kind.EQ){
+				IToken op=t;
+				consume();
+				y=PowExpr();
+				return new BinaryExpr(firstToken,x,op,y);
+			}
+			return x;
+		}
+		return x;
+
+	}
+	private Expr PowExpr()throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=AdditiveExpr();
+		if(x!=null){
+
+			while(t.kind()==Kind.EXP){
+				IToken op=t;
+				consume();
+				y=PowExpr();
+				return new BinaryExpr(firstToken,x,op,y);
+			}
+			return x;
+		}
+		return x;
+	}
+	private Expr AdditiveExpr()throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=MultiplicativeExpr();
+		if(x!=null){
+			while(t.kind()==Kind.PLUS||t.kind()==Kind.MINUS){
+				IToken op=t;
+				consume();
+				y=MultiplicativeExpr();
+				x= new BinaryExpr(firstToken,x,op,y);
+
+			}
+			return x;
+		}
+		return x;
+	}
+	private Expr MultiplicativeExpr()throws PLCCompilerException{
+
+		IToken firstToken = t;
+		Expr x=null;
+		Expr y=null;
+		x=UnaryExpr();
+		while(t.kind()==Kind.TIMES||t.kind()==Kind.DIV||t.kind()==Kind.MOD){
+			IToken op=t;
+			consume();
+			y=UnaryExpr();
+			x=new BinaryExpr(firstToken,x,op,y);
+
+		}
+		return x;
+	}
+	private Expr UnaryExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		if (t.kind() == Kind.BANG || t.kind() == Kind.MINUS || t.kind() == Kind.RES_width || t.kind() == Kind.RES_height) {
+			consume();
+			Expr x = UnaryExpr();
+			if (x != null) {
+				return new UnaryExpr(firstToken, firstToken, x);
+			}
+		}
+		return PostfixExpr();
+	}
+
+
+	private Expr PostfixExpr()throws PLCCompilerException{
+		IToken firstToken=t;
+		Expr x=null;
+		PixelSelector y=null;
+		ChannelSelector z=null;
+		x=PrimaryExpr();
+
+		if(x==null){
+			return null;
+		}
+		else {
+			consume();
+			y=PixelSelector();
+			if(y!=null){
+				consume();
+				if(t.kind()==Kind.COLON){
+
+					z=ChannelSelector();}
+				if(z!=null){
+					return new PostfixExpr(firstToken,x,y,z);
+				}
+
+				else {return new PostfixExpr(firstToken,x,y,null);
+				}
+			}
+			else {
+				if(t.kind()==Kind.COLON){
+
+					z=ChannelSelector();}
+				if(z!=null){
+					return new PostfixExpr(firstToken,x,null,z);
+				}
+				else return x;
+			}
+		}
+	}
+	private ChannelSelector ChannelSelector()throws PLCCompilerException{
+		IToken firstToken = t;
+		Kind color=null;
+		IToken x=null;
+		if(t.kind()!=Kind.COLON){throw new SyntaxException("pro ChannelS");}
+		else{
+			consume();
+			if(t.kind()==Kind.RES_green||t.kind()==Kind.RES_red||t.kind()==Kind.RES_blue){
+				x=t;
+				return new ChannelSelector(firstToken,x);
+			}
+			else throw new SyntaxException("Channels");
+		}
+	}
+
+
+
+	private Expr ExpandedPixelExpr()throws PLCCompilerException{
+		IToken firstToken=t;
+		Expr x=null;
+		Expr y=null;
+		Expr z=null;
+		if(t.kind()==Kind.LSQUARE){
+			consume();
+			x=expr();
+			if(t.kind()==Kind.COMMA){
+				consume();
+				y=expr();
+				if(t.kind()==Kind.COMMA){
+					consume();
+					z=expr();
+					if(t.kind()==Kind.RSQUARE){
+						return new ExpandedPixelExpr(firstToken,x,y,z);
+					}
+					else throw new SyntaxException("Missing bracket");
+				}
+				else return null;
+			}
+			else return null;
+		}
+		else return null;
+	}
+	private PixelSelector PixelSelector() throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr x = null;
+		Expr y = null;
+
+		if (t.kind() == Kind.LSQUARE) {
+			consume();
+			x = expr();
+
+			if (t.kind() == Kind.COMMA) {
+				consume();
+				y = expr();
+
+				if (t.kind() == Kind.RSQUARE) {
+					return new PixelSelector(firstToken, x, y);
+				} else {
+					throw new SyntaxException("Missing closing bracket");
+				}
+			}
+		}
+		return null;
+	}
+
+
+	private Expr PrimaryExpr() throws PLCCompilerException{
+		IToken firstToken = t;
+		Expr y;
+		switch (t.kind()){
+			case NUM_LIT -> {
+				y= new NumLitExpr(t);
+
+			}
+			case IDENT -> {
+				y=new IdentExpr(t);
+			}
+			case STRING_LIT -> {
+				y= new StringLitExpr(t);
+			}
+			case BOOLEAN_LIT -> {
+				y= new BooleanLitExpr(t);
+			}
+			case LPAREN -> {
+				consume();
+				Expr x=expr();
+				if(x!=null){
+
+					if(t.kind()==Kind.RPAREN){
+						return x;
+					}
+					else throw new SyntaxException("No right parentheses");
+				}
+				else throw new SyntaxException("Null expression");
+			}
+			case CONST -> {
+				y=new ConstExpr(t);
+			}
+			case LSQUARE -> {
+				return ExpandedPixelExpr();
+			}
+			default -> {
+				throw new SyntaxException("Default primary expression");
+			}
+
+		}
+		return y;
+
+	}
 }

@@ -38,9 +38,15 @@ public class Parser implements IParser {
 	}
 
 	private AST program() throws PLCCompilerException {
+
 		throw new UnsupportedOperationException();
 	}
 
 
-
+/* Notes
+* program can be: RES_image, RES_pixel, RES_int, RES_string, RES_void, RES_boolean,
+* example: int program()
+* has to have block open and block close
+* tokens outside of block should throw a SyntaxException
+* */
 }
