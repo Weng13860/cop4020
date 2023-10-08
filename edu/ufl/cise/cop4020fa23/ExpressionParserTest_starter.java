@@ -671,6 +671,7 @@ class ExpressionParserTest_starter {
 	void testOneSmallBracket() throws PLCCompilerException {
 		String input = """
            [1, 2
+           
            """;
 		assertThrows(SyntaxException.class, () -> {
 			@SuppressWarnings("unused")
