@@ -101,8 +101,6 @@ public class ExpressionParser implements IParser {
 				}
 			}
 		}
-
-
 		return new ConditionalExpr(firstToken,x,y,z);
 	}
 	private Expr LogicalOrExpr()throws PLCCompilerException{
