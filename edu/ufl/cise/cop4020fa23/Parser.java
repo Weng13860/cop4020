@@ -55,29 +55,52 @@ public class Parser implements IParser {
 	}
 
 	private AST program() throws PLCCompilerException {
+		List<IToken> params = new ArrayList<IToken>();
 		consume();
 		// move to next token only if the token is valid
 		if(isKind(t.kind())){
 			consume();
 
 			// next token must be "program"
-			if(t.text() == "program"){
+			if(t.kind() == IDENT){
+				System.out.println("ident: " + t.text());
 				consume();
 
-				if(t.kind() == BLOCK_OPEN) {
+				if(t.kind() == LPAREN) {
+					System.out.println("LPAREN: " + t.text());
 					consume();
-
-					while (t.kind() != BLOCK_CLOSE) {
+					if(t.kind() == RPAREN){
 						consume();
 					}
-					consume();
-					if (t != null) {
-						throw new SyntaxException("Unexpected token after block close");
+					else{
+						while(t.kind() != RPAREN){
+							System.out.println("param: " + t.text());
+							params.add(t);
+							consume();
+						}
 					}
-					// return something
-				}
-				else{
-					throw new SyntaxException("missing block close");
+
+					if (t.kind() == BLOCK_OPEN) {
+						System.out.println("block_open: " + t.text());
+						consume();
+
+						while (t.kind() != BLOCK_CLOSE && t != null) {
+							consume();
+						}
+						System.out.println("block_close: " + t.text());
+
+						if (t == null) {
+							throw new SyntaxException("missing block close");
+						}
+
+						if (lexer.next() != null) {
+							throw new SyntaxException("Unexpected token after block close: " + lexer.next().text());
+						}
+
+					}
+					else {
+						throw new SyntaxException("expected block open");
+					}
 				}
 			}
 			else{
