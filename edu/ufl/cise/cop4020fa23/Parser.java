@@ -55,43 +55,159 @@ public class Parser implements IParser {
 		return e;
 	}
 	public List<NameDef>Param() throws PLCCompilerException{
+		List<NameDef> params = new ArrayList<>();
 
+		if (isKind(t.kind())) {
+			params.add(nameDef());
+			while (t.kind() == COMMA) {
+				consume();
+				params.add(nameDef());
+			}
+		}
+
+		return params;
 	}
 	public NameDef nameDef() throws PLCCompilerException{
-
+		IToken typeToken = t;
+		consume();
+		Dimension dimension = null;
+		if (t.kind() == LSQUARE) {
+			dimension = Dim();
+		}
+		if (t.kind() != IDENT) {
+			throw new SyntaxException("Expected IDENT token for name definition.");
+		}
+		IToken identToken = t;
+		consume();
+		return new NameDef(t, typeToken, dimension, identToken);
 	}
 	public Dimension Dim() throws PLCCompilerException{
+		Expr width = null;
+		Expr height = null;
 
+		if (t.kind() != Kind.LSQUARE) {
+			throw new SyntaxException("Expected '[' at the start of a dimension.");
+		}
+
+		consume();
+
+		// Parse width expression.
+		ExpressionParser widthParser = new ExpressionParser(lexer);
+		width = widthParser.parse();
+
+		if (t.kind() != Kind.COMMA) {
+			throw new SyntaxException("Expected ',' between width and height in the dimension.");
+		}
+
+		consume();
+
+		// Parse height expression.
+		ExpressionParser heightParser = new ExpressionParser(lexer);
+		height = heightParser.parse();
+
+		if (t.kind() != Kind.RSQUARE) {
+			throw new SyntaxException("Expected ']' at the end of a dimension.");
+		}
+
+		consume();
+
+		return new Dimension(t, width, height);
 	}
 	public Block block() throws PLCCompilerException{
+		List<Block.BlockElem> statements = new ArrayList<>();
 
-	}
-	public  Statement statement() throws PLCCompilerException{
+		consume();
+		while (t.kind() != BLOCK_CLOSE) {
+			//statements.add(Block.BlockElem(t));
+		}
+		consume();
 
+		return new Block(t, statements);
 	}
+//	public  Statement statement() throws PLCCompilerException{
+//		return new Statement();
+//	}
 	public Declaration decl() throws PLCCompilerException{
-
+		NameDef nameDef = nameDef();
+		Expr initializer = null;
+		if (t.kind() == ASSIGN) {
+			consume();
+			ExpressionParser parser = new ExpressionParser(lexer);
+			initializer = parser.parse();
+		}
+		return new Declaration(t, nameDef, initializer);
 	}
 	public PostfixExpr postfix() throws PLCCompilerException{
-
+		ExpressionParser primaryParser = new ExpressionParser(lexer);
+		Expr primary = primaryParser.parse();
+		PixelSelector pixel = null;
+		ChannelSelector channel = null;
+		if (t.kind() == LSQUARE) {
+			pixel = pixsele();
+		}
+		if (t.kind() == COMMA) {
+			consume();
+			channel = channelsele();
+		}
+		return new PostfixExpr(t, primary, pixel, channel);
 	}
 	public LValue lv() throws PLCCompilerException{
-
+		IToken name = t;
+		consume();
+		PixelSelector pixelSelector = null;
+		ChannelSelector channelSelector = null;
+		if (t.kind() == LSQUARE) {
+			pixelSelector = pixsele();
+		}
+		if (t.kind() == COMMA) {
+			consume();
+			channelSelector = channelsele();
+		}
+		return new LValue(t, name, pixelSelector, channelSelector);
 	}
 	public ChannelSelector channelsele() throws PLCCompilerException{
-
+		if (t.kind() == IDENT) {
+			IToken color = t;
+			consume();
+			return new ChannelSelector(t, color);
+		}
+		throw new SyntaxException("Expected IDENT token for channel selector.");
 	}
 	public PixelSelector pixsele() throws PLCCompilerException{
-
+		consume(); // consume '['
+		ExpressionParser parser = new ExpressionParser(lexer);
+		Expr xExpr = parser.parse();
+		if (t.kind() != COMMA) {
+			throw new SyntaxException("Expected ',' in pixel selector.");
+		}
+		consume();
+		Expr yExpr = parser.parse();
+		if (t.kind() != RSQUARE) {
+			throw new SyntaxException("Expected ']' in pixel selector.");
+		}
+		consume();
+		return new PixelSelector(t, xExpr, yExpr);
 	}
 	public ExpandedPixelExpr expanpix() throws PLCCompilerException{
-
+		ExpressionParser parser = new ExpressionParser(lexer);
+		Expr red = parser.parse();
+		consume();
+		Expr grn = parser.parse();
+		consume();
+		Expr blu = parser.parse();
+		consume();
+		return new ExpandedPixelExpr(t, red, grn, blu);
 	}
 	public GuardedBlock guardBlo() throws PLCCompilerException{
-
+		ExpressionParser parser = new ExpressionParser(lexer);
+		Expr guard = parser.parse();
+		consume();
+		Block block = block();
+		return new GuardedBlock(t, guard, block);
 	}
 	public StatementBlock blockst() throws PLCCompilerException{
-
+		Block block = block();
+		return new StatementBlock(t, block);
 	}
 
 
@@ -102,7 +218,7 @@ public class Parser implements IParser {
 		if(isKind(t.kind())){
 			consume();
 
-			// next token must be "program"
+			// next token must be ident
 			if(t.kind() == IDENT){
 				System.out.println("ident: " + t.text());
 				consume();
