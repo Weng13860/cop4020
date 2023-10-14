@@ -67,87 +67,108 @@ public class Parser implements IParser {
 		return params;
 	}
 	public NameDef nameDef() throws PLCCompilerException{
-		IToken firstToken = t;
-		Dimension x=null;
-		if(isKind(t.kind())) {
-			consume();
-			if(t.kind()==IDENT){
-
-				return new NameDef(firstToken,firstToken,null,t);
-			}
-			else {
-				x=Dim();
-				if(x!=null){
-					return new NameDef(firstToken,firstToken,x,t);
-				}
-				else throw new SyntaxException("namedefaa");
-			}
+		IToken typeToken = t;
+		consume();
+		Dimension dimension = null;
+		if (t.kind() == LSQUARE) {
+			dimension = Dim();
 		}
-		else throw new SyntaxException("namedefbb");
+		if (t.kind() != IDENT) {
+			throw new SyntaxException("Expected IDENT token for name definition.");
+		}
+		IToken identToken = t;
+		consume();
+		return new NameDef(t, typeToken, dimension, identToken);
 	}
 	public Dimension Dim() throws PLCCompilerException{
-		IToken firstToken=t;
-		Expr x;
-		Expr y;
-		if(t.kind()==LSQUARE){
-			consume();
-			x= expr();
-			if(x!=null) {
-				consume();
-				if(t.kind()==COMMA){
-					consume();
-					y= expr();
-					if(y!=null){
-						consume();
-						if(t.kind()==RSQUARE){
-						return new Dimension(firstToken,x,y);
-						}
-						else throw new SyntaxException("dimaaa");}
-					else throw new SyntaxException("dimbbb");}
-				else throw new SyntaxException("dimccc");}
-			else throw new SyntaxException("dimddd");}
-		else throw new SyntaxException("dimeee");
+
+		Expr width = null;
+		Expr height = null;
+
+		if (t.kind() != Kind.LSQUARE) {
+			throw new SyntaxException("Expected '[' at the start of a dimension.");
+		}
+
+		consume();
+
+		// Parse width expression.
+		ExpressionParser widthParser = new ExpressionParser(lexer);
+		width = widthParser.parse();
+
+		if (t.kind() != Kind.COMMA) {
+			throw new SyntaxException("Expected ',' between width and height in the dimension.");
+		}
+
+		consume();
+
+		// Parse height expression.
+		ExpressionParser heightParser = new ExpressionParser(lexer);
+		height = heightParser.parse();
+
+		if (t.kind() != Kind.RSQUARE) {
+			throw new SyntaxException("Expected ']' at the end of a dimension.");
+		}
+
+		consume();
+
+		return new Dimension(t, width, height);
 	}
 	public Block block() throws PLCCompilerException{
-		IToken firstToken=t;
-		Declaration x;
-		Statement y;
-		List <Block.BlockElem>z=new ArrayList<>();
-		if(t.kind()==BLOCK_OPEN){
-			consume();
-			while(t.kind()!=BLOCK_CLOSE){
-			x=decl();
-			if(x!=null){
-				z.add(x);
-				consume();
-				if(t.kind()==SEMI){
-					consume();
-				}
-				else throw new SyntaxException("Block1111");
-			}
-			else{
-				y=statement();
-				if(y!=null){
-					z.add(y);
-					consume();
-					if(t.kind()==SEMI){
-						consume();
-					}
-					else throw new SyntaxException("Block2222");
-				}
-				throw new SyntaxException("Block333");
-			}
-			}
-			return new Block(firstToken,z);
+		List<Block.BlockElem> statements = new ArrayList<>();
 
+		consume(); // Assuming the '{' token.
+		while (t.kind() != BLOCK_CLOSE) {
+			statements.add(statement());
 		}
-		else throw new SyntaxException("Block444");
+		consume(); // Assuming the '}' token.
 
+		return new Block(t, statements);
 	}
 
-//	public  Statement statement() throws PLCCompilerException{
-//		return new Statement();
-//	}
+	public Statement statement() throws PLCCompilerException {
+		// Return statement
+		if (t.kind() == RETURN) {
+			IToken firstToken = t;
+			consume();
+			Expr returnExpr = expr();
+			return new ReturnStatement(firstToken, returnExpr);
+		}
+		// Write statement
+		else if (t.kind() == RES_write) {
+			IToken firstToken = t;
+			consume();
+			Expr writeExpr = expr();
+			return new WriteStatement(firstToken, writeExpr);
+		}
+		// Do statement
+		else if (t.kind() == RES_do) {
+			IToken firstToken = t;
+			consume();
+			List<GuardedBlock> guardedBlocks = new ArrayList<>();
+			// You'll need to specify the ending condition for GuardedBlocks based on your grammar.
+			// Assuming it ends when it's not a guarded block.
+			while (t.kind()) {
+				guardedBlocks.add(guardBlo());
+			}
+			return new DoStatement(firstToken, guardedBlocks);
+		}
+		// Assignment statement
+		else if (t.kind() == IDENT) {
+			IToken firstToken = t;
+			LValue lvalue = lv(); // Assuming lv() reads an LValue.
+			consume();
+			if (t.kind() == ASSIGN) {
+				consume();
+				Expr rightSide = expr();
+				return new AssignmentStatement(firstToken, lvalue, rightSide);
+			} else {
+				throw new SyntaxException("Expected = after identifier for an assignment statement.");
+			}
+		}
+
+		throw new SyntaxException("Unknown statement starting with: " + t.text());
+	}
+
 	public Declaration decl() throws PLCCompilerException{
 		NameDef nameDef = nameDef();
 		Expr initializer = null;
