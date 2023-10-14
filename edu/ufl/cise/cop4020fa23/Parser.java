@@ -48,11 +48,52 @@ public class Parser implements IParser {
 		}
 	}
 
+
 	@Override
 	public AST parse() throws PLCCompilerException {
 		AST e = program();
 		return e;
 	}
+	public List<NameDef>Param() throws PLCCompilerException{
+
+	}
+	public NameDef nameDef() throws PLCCompilerException{
+
+	}
+	public Dimension Dim() throws PLCCompilerException{
+
+	}
+	public Block block() throws PLCCompilerException{
+
+	}
+	public  Statement statement() throws PLCCompilerException{
+
+	}
+	public Declaration decl() throws PLCCompilerException{
+
+	}
+	public PostfixExpr postfix() throws PLCCompilerException{
+
+	}
+	public LValue lv() throws PLCCompilerException{
+
+	}
+	public ChannelSelector channelsele() throws PLCCompilerException{
+
+	}
+	public PixelSelector pixsele() throws PLCCompilerException{
+
+	}
+	public ExpandedPixelExpr expanpix() throws PLCCompilerException{
+
+	}
+	public GuardedBlock guardBlo() throws PLCCompilerException{
+
+	}
+	public StatementBlock blockst() throws PLCCompilerException{
+
+	}
+
 
 	private AST program() throws PLCCompilerException {
 		List<IToken> params = new ArrayList<IToken>();
