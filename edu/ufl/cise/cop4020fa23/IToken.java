@@ -17,4 +17,5 @@ public interface IToken {
 	public SourceLocation sourceLocation();
 	public Kind kind();
 	public String text();
+
 }

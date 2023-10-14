@@ -58,7 +58,23 @@ public class Parser implements IParser {
 
 	}
 	public NameDef nameDef() throws PLCCompilerException{
+		IToken firstToken = t;
+		Dimension x=null;
+		if(isKind(t.kind())) {
+			consume();
+			if(t.kind()==IDENT){
 
+				return new NameDef(firstToken,firstToken,null,t);
+			}
+			else {
+				x=Dim();
+				if(x!=null){
+					return new NameDef(firstToken,firstToken,x,t);
+				}
+				else throw new SyntaxException("namedefaa");
+			}
+		}
+		else throw new SyntaxException("namedefbb");
 	}
 	public Dimension Dim() throws PLCCompilerException{
 
