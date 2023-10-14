@@ -15,9 +15,8 @@ import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import edu.ufl.cise.cop4020fa23.exceptions.SyntaxException;
 
 import javax.swing.plaf.synth.SynthButtonUI;
-
+import edu.ufl.cise.cop4020fa23.ExpressionParser;
 import static edu.ufl.cise.cop4020fa23.Kind.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,6 +55,8 @@ public class Parser implements IParser {
 	}
 	public List<NameDef>Param() throws PLCCompilerException{
 
+
+
 	}
 	public NameDef nameDef() throws PLCCompilerException{
 		IToken firstToken = t;
@@ -77,7 +78,27 @@ public class Parser implements IParser {
 		else throw new SyntaxException("namedefbb");
 	}
 	public Dimension Dim() throws PLCCompilerException{
-
+		IToken firstToken=t;
+		Expr x;
+		Expr y;
+		if(t.kind()==LSQUARE){
+			consume();
+			x= Dim().getWidth();
+			if(x!=null) {
+				consume();
+				if(t.kind()==COMMA){
+					consume();
+					y= Dim().getHeight();
+					if(y!=null){
+						consume();
+						if(t.kind()==RSQUARE){
+						return new Dimension(firstToken,x,y);
+						}
+						else throw new SyntaxException("dimaaa");}
+					else throw new SyntaxException("dimbbb");}
+				else throw new SyntaxException("dimccc");}
+			else throw new SyntaxException("dimddd");}
+		else throw new SyntaxException("dimeee");
 	}
 	public Block block() throws PLCCompilerException{
 

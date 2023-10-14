@@ -73,7 +73,7 @@ public class ExpressionParser implements IParser {
 
 	//get token and see what function we choose here, if first token is ? we use conditionalExpr. so send it to the function
 	//etc etc........but add exceptions help for debug..
-	private Expr expr() throws PLCCompilerException {
+	public Expr expr() throws PLCCompilerException {
 		IToken firstToken = t;
 		if(firstToken.kind()==Kind.QUESTION){return ConditionalExpr();}
 
