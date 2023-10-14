@@ -147,7 +147,7 @@ public class Parser implements IParser {
 			List<GuardedBlock> guardedBlocks = new ArrayList<>();
 			// You'll need to specify the ending condition for GuardedBlocks based on your grammar.
 			// Assuming it ends when it's not a guarded block.
-			while (t.kind()!=RES_fi) {
+			while (t.kind()!=RES_od) {
 				consume();
 				GuardedBlock x=guardBlo();
 				if(x!=null){
