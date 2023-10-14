@@ -147,10 +147,41 @@ public class Parser implements IParser {
 			List<GuardedBlock> guardedBlocks = new ArrayList<>();
 			// You'll need to specify the ending condition for GuardedBlocks based on your grammar.
 			// Assuming it ends when it's not a guarded block.
-			while (t.kind()) {
-				guardedBlocks.add(guardBlo());
+			while (t.kind()!=RES_fi) {
+				consume();
+				GuardedBlock x=guardBlo();
+				if(x!=null){
+					guardedBlocks.add(x);}
+				consume();
+				if(t.kind()==BOX){
+					consume();
+					GuardedBlock y=guardBlo();
+					guardedBlocks.add(y);
+				}
 			}
 			return new DoStatement(firstToken, guardedBlocks);
+		}
+		//If Statement
+		else if (t.kind() == RES_if) {
+
+			IToken firstToken = t;
+			consume();
+			List<GuardedBlock> guardedBlocks = new ArrayList<>();
+			// You'll need to specify the ending condition for GuardedBlocks based on your grammar.
+			// Assuming it ends when it's not a guarded block.
+			while (t.kind()!=RES_fi) {
+				consume();
+				GuardedBlock x=guardBlo();
+				if(x!=null){
+					guardedBlocks.add(x);}
+				consume();
+				if(t.kind()==BOX){
+					consume();
+					GuardedBlock y=guardBlo();
+					guardedBlocks.add(y);
+				}
+			}
+			return new IfStatement(firstToken, guardedBlocks);
 		}
 		// Assignment statement
 		else if (t.kind() == IDENT) {
