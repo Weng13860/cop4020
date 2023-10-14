@@ -144,9 +144,7 @@ public class Parser implements IParser {
 		else throw new SyntaxException("Block444");
 
 	}
-	public  Statement statement() throws PLCCompilerException{
 
-	}
 //	public  Statement statement() throws PLCCompilerException{
 //		return new Statement();
 //	}
@@ -591,4 +589,4 @@ public class Parser implements IParser {
    * has to have block open and block close
    * tokens outside of block should throw a SyntaxException
 */
-}
+
