@@ -114,15 +114,24 @@ public class Parser implements IParser {
 		return new Dimension(t, width, height);
 	}
 	public Block block() throws PLCCompilerException{
-		List<Block.BlockElem> statements = new ArrayList<>();
+		List<Block.BlockElem> blockElems = new ArrayList<>();
 
 		consume(); // Assuming the '{' token.
 		while (t.kind() != BLOCK_CLOSE) {
-			statements.add(statement());
+			if (isKind(t.kind())) {
+				blockElems.add(decl());
+			} else {
+				blockElems.add(statement());
+			}
+			if (t.kind() == SEMI) {
+				consume();
+			} else {
+				throw new SyntaxException("Expected ';' after a declaration or statement.");
+			}
 		}
-		consume(); // Assuming the '}' token.
+		consume();
 
-		return new Block(t, statements);
+		return new Block(t, blockElems);
 	}
 
 	public Statement statement() throws PLCCompilerException {
@@ -312,12 +321,12 @@ public class Parser implements IParser {
 
 						consume();
 						if(t.kind()!=RPAREN){
-							throw new SyntaxException("a9");
+							throw new SyntaxException("missing right parentheses");
 						}
 						else consume();
 					}
 				}else{
-					throw new SyntaxException("a10");
+					throw new SyntaxException("missing left parentheses");
 				}
 
 				if (t.kind() == BLOCK_OPEN) {
