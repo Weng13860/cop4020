@@ -47,7 +47,6 @@ public class Parser implements IParser {
 		}
 	}
 
-
 	@Override
 	public AST parse() throws PLCCompilerException {
 		AST e = program();
@@ -81,41 +80,30 @@ public class Parser implements IParser {
 		return new NameDef(t, typeToken, dimension, identToken);
 	}
 	public Dimension Dim() throws PLCCompilerException{
-
+		IToken firstToken=t;
 		Expr width = null;
 		Expr height = null;
-
 		if (t.kind() != Kind.LSQUARE) {
 			throw new SyntaxException("Expected '[' at the start of a dimension.");
 		}
-
 		consume();
-
 		// Parse width expression.
-		ExpressionParser widthParser = new ExpressionParser(lexer);
-		width = widthParser.parse();
-
+		width = expr();
 		if (t.kind() != Kind.COMMA) {
 			throw new SyntaxException("Expected ',' between width and height in the dimension.");
 		}
-
 		consume();
-
 		// Parse height expression.
-		ExpressionParser heightParser = new ExpressionParser(lexer);
-		height = heightParser.parse();
+		height =expr();
 
 		if (t.kind() != Kind.RSQUARE) {
 			throw new SyntaxException("Expected ']' at the end of a dimension.");
 		}
-
 		consume();
-
-		return new Dimension(t, width, height);
+		return new Dimension(firstToken, width, height);
 	}
 	public Block block() throws PLCCompilerException{
 		List<Block.BlockElem> blockElems = new ArrayList<>();
-
 		consume(); // Assuming the '{' token.
 		while (t.kind() != BLOCK_CLOSE) {
 			if (isKind(t.kind())) {
@@ -136,22 +124,21 @@ public class Parser implements IParser {
 
 	public Statement statement() throws PLCCompilerException {
 		// Return statement
+		IToken firstToken = t;
 		if (t.kind() == RETURN) {
-			IToken firstToken = t;
+
 			consume();
 			Expr returnExpr = expr();
 			return new ReturnStatement(firstToken, returnExpr);
 		}
 		// Write statement
 		else if (t.kind() == RES_write) {
-			IToken firstToken = t;
 			consume();
 			Expr writeExpr = expr();
 			return new WriteStatement(firstToken, writeExpr);
 		}
 		// Do statement
 		else if (t.kind() == RES_do) {
-			IToken firstToken = t;
 			consume();
 			List<GuardedBlock> guardedBlocks = new ArrayList<>();
 			// You'll need to specify the ending condition for GuardedBlocks based on your grammar.
@@ -172,8 +159,6 @@ public class Parser implements IParser {
 		}
 		//If Statement
 		else if (t.kind() == RES_if) {
-
-			IToken firstToken = t;
 			consume();
 			List<GuardedBlock> guardedBlocks = new ArrayList<>();
 			// You'll need to specify the ending condition for GuardedBlocks based on your grammar.
@@ -194,9 +179,8 @@ public class Parser implements IParser {
 		}
 		// Assignment statement
 		else if (t.kind() == IDENT) {
-			IToken firstToken = t;
 			LValue lvalue = lv(); // Assuming lv() reads an LValue.
-			consume();
+
 			if (t.kind() == ASSIGN) {
 				consume();
 				Expr rightSide = expr();
@@ -210,28 +194,28 @@ public class Parser implements IParser {
 	}
 
 	public Declaration decl() throws PLCCompilerException{
+		IToken firstToken=t;
 		NameDef nameDef = nameDef();
 		Expr initializer = null;
 		if (t.kind() == ASSIGN) {
 			consume();
-			ExpressionParser parser = new ExpressionParser(lexer);
-			initializer = parser.parse();
+			initializer = expr();
 		}
 		return new Declaration(t, nameDef, initializer);
 	}
 	public PostfixExpr postfix() throws PLCCompilerException{
-		ExpressionParser primaryParser = new ExpressionParser(lexer);
-		Expr primary = primaryParser.parse();
+		IToken firstToken=t;
+		Expr x= PrimaryExpr();
+		consume();
 		PixelSelector pixel = null;
 		ChannelSelector channel = null;
 		if (t.kind() == LSQUARE) {
 			pixel = pixsele();
 		}
-		if (t.kind() == COMMA) {
-			consume();
+		if (t.kind() == COLON) {
 			channel = channelsele();
 		}
-		return new PostfixExpr(t, primary, pixel, channel);
+		return new PostfixExpr(t, x, pixel, channel);
 	}
 	public LValue lv() throws PLCCompilerException{
 		IToken name = t;
@@ -241,7 +225,7 @@ public class Parser implements IParser {
 		if (t.kind() == LSQUARE) {
 			pixelSelector = pixsele();
 		}
-		if (t.kind() == COMMA) {
+		if (t.kind() == COLON) {
 			consume();
 			channelSelector = channelsele();
 		}
@@ -256,14 +240,16 @@ public class Parser implements IParser {
 		throw new SyntaxException("Expected IDENT token for channel selector.");
 	}
 	public PixelSelector pixsele() throws PLCCompilerException{
-		consume(); // consume '['
+		// consume '['
 		ExpressionParser parser = new ExpressionParser(lexer);
 		Expr xExpr = parser.parse();
+		consume();
 		if (t.kind() != COMMA) {
 			throw new SyntaxException("Expected ',' in pixel selector.");
 		}
 		consume();
 		Expr yExpr = parser.parse();
+
 		if (t.kind() != RSQUARE) {
 			throw new SyntaxException("Expected ']' in pixel selector.");
 		}
@@ -319,7 +305,7 @@ public class Parser implements IParser {
 					else{
 						params=Param();
 
-						consume();
+
 						if(t.kind()!=RPAREN){
 							throw new SyntaxException("missing right parentheses");
 						}
@@ -629,6 +615,7 @@ public class Parser implements IParser {
 			case LSQUARE -> {
 				return ExpandedPixelExpr();
 			}
+
 			default -> {
 				throw new SyntaxException("Default primary expression");
 			}

@@ -321,7 +321,7 @@ public class ExpressionParser implements IParser {
 	}
 
 
-	private Expr PrimaryExpr() throws PLCCompilerException{
+	public Expr PrimaryExpr() throws PLCCompilerException{
 		IToken firstToken = t;
 		Expr y;
 		switch (t.kind()){
