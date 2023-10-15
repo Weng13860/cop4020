@@ -285,60 +285,54 @@ public class Parser implements IParser {
 
 
 	private AST program() throws PLCCompilerException {
-		List<IToken> params = new ArrayList<IToken>();
+		IToken typeToken;
+		IToken firstToken=t;
+		List<NameDef> params = new ArrayList<NameDef>();
 		consume();
+		IToken Ident;
 		// move to next token only if the token is valid
 		if(isKind(t.kind())){
+			typeToken = t;
 			consume();
 
 			// next token must be ident
 			if(t.kind() == IDENT){
-				System.out.println("ident: " + t.text());
+				Ident=t;
+
 				consume();
 
 				if(t.kind() == LPAREN) {
-					System.out.println("LPAREN: " + t.text());
+					//System.out.println("LPAREN: " + t.text());
 					consume();
 					if(t.kind() == RPAREN){
 						consume();
 					}
 					else{
-						while(t.kind() != RPAREN){
-							System.out.println("param: " + t.text());
-							params.add(t);
-							consume();
-						}
-					}
+						params=Param();
 
-					if (t.kind() == BLOCK_OPEN) {
-						System.out.println("block_open: " + t.text());
 						consume();
-
-						while (t.kind() != BLOCK_CLOSE && t != null) {
-							consume();
+						if(t.kind()!=RPAREN){
+							throw new SyntaxException("a9");
 						}
-						System.out.println("block_close: " + t.text());
-
-						if (t == null) {
-							throw new SyntaxException("missing block close");
-						}
-
-						if (lexer.next() != null) {
-							throw new SyntaxException("Unexpected token after block close: " + lexer.next().text());
-						}
-
+						else consume();
 					}
-					else {
-						throw new SyntaxException("expected block open");
-					}
+				}else{
+					throw new SyntaxException("a10");
 				}
-			}
-			else{
-				throw new SyntaxException("expected \"program\"");
-			}
-		}
-		else{
-			throw new SyntaxException("invalid kind before program()");
+
+				if (t.kind() == BLOCK_OPEN) {
+					//System.out.println("block_open: " + t.text());
+
+
+					Block a=block();
+
+					return new Program(firstToken,typeToken,Ident,params,a);
+
+				}
+				else {
+					throw new SyntaxException("expected block open");
+				}
+			}throw new SyntaxException("exp Ident");
 		}
 		throw new UnsupportedOperationException();
 	}
