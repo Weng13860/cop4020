@@ -104,13 +104,17 @@ public class Parser implements IParser {
 	}
 	public Block block() throws PLCCompilerException{
 		List<Block.BlockElem> blockElems = new ArrayList<>();
-		consume(); // Assuming the '{' token.
+		consume();  // Assuming this consumes the BLOCK_OPEN token '{'
+
 		while (t.kind() != BLOCK_CLOSE) {
 			if (isKind(t.kind())) {
 				blockElems.add(decl());
+			} else if (t.kind() == BLOCK_OPEN) {  // Checking for nested block
+				blockElems.add(blockst());  // Add the nested block as an element to the current block
 			} else {
 				blockElems.add(statement());
 			}
+
 			if (t.kind() == SEMI) {
 				consume();
 			} else {
@@ -179,13 +183,14 @@ public class Parser implements IParser {
 		}
 		// Assignment statement
 		else if (t.kind() == IDENT) {
-			LValue lvalue = lv(); // Assuming lv() reads an LValue.
+			LValue lvalue = lv();
 
 			if (t.kind() == ASSIGN) {
 				consume();
 				Expr rightSide = expr();
 				return new AssignmentStatement(firstToken, lvalue, rightSide);
 			} else {
+				System.out.println("=: " + t.text());
 				throw new SyntaxException("Expected = after identifier for an assignment statement.");
 			}
 		}
@@ -232,7 +237,7 @@ public class Parser implements IParser {
 		return new LValue(t, name, pixelSelector, channelSelector);
 	}
 	public ChannelSelector channelsele() throws PLCCompilerException{
-		if (t.kind() == IDENT) {
+		if (t.kind() == RES_red || t.kind() == RES_green || t.kind() == RES_blue) {
 			IToken color = t;
 			consume();
 			return new ChannelSelector(t, color);
@@ -240,20 +245,23 @@ public class Parser implements IParser {
 		throw new SyntaxException("Expected IDENT token for channel selector.");
 	}
 	public PixelSelector pixsele() throws PLCCompilerException{
-		// consume '['
+		System.out.println("Starting to parse pixel selector with token: " + t.text());
 		ExpressionParser parser = new ExpressionParser(lexer);
-		Expr xExpr = parser.parse();
 		consume();
+		Expr xExpr = parser.parse();
+		System.out.println("xExpr: " + xExpr.firstToken().text());
+		System.out.println("current token: " + t.text());
 		if (t.kind() != COMMA) {
 			throw new SyntaxException("Expected ',' in pixel selector.");
 		}
 		consume();
-		Expr yExpr = parser.parse();
 
+		Expr yExpr = parser.parse();
+		System.out.println("yExpr: " + yExpr.firstToken().text());
+		System.out.println("current token: " + t.text());
 		if (t.kind() != RSQUARE) {
 			throw new SyntaxException("Expected ']' in pixel selector.");
 		}
-		consume();
 		return new PixelSelector(t, xExpr, yExpr);
 	}
 	public ExpandedPixelExpr expanpix() throws PLCCompilerException{
@@ -304,7 +312,6 @@ public class Parser implements IParser {
 					}
 					else{
 						params=Param();
-
 
 						if(t.kind()!=RPAREN){
 							throw new SyntaxException("missing right parentheses");
