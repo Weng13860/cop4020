@@ -174,6 +174,7 @@ public class Parser implements IParser {
 					GuardedBlock y=guardBlo();
 					guardedBlocks.add(y);
 				}
+				else{throw new SyntaxException("aaa");}
 			}
 			consume();
 			return new IfStatement(firstToken, guardedBlocks);
