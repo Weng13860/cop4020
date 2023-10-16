@@ -103,8 +103,10 @@ public class Parser implements IParser {
 		return new Dimension(firstToken, width, height);
 	}
 	public Block block() throws PLCCompilerException{
+		IToken firstToken=t;
 		List<Block.BlockElem> blockElems = new ArrayList<>();
 		consume();  // Assuming this consumes the BLOCK_OPEN token '{'
+
 
 		while (t.kind() != BLOCK_CLOSE) {
 			if (isKind(t.kind())) {
@@ -115,6 +117,7 @@ public class Parser implements IParser {
 				blockElems.add(statement());
 			}
 
+
 			if (t.kind() == SEMI) {
 				consume();
 			} else {
@@ -123,7 +126,7 @@ public class Parser implements IParser {
 		}
 		consume();
 
-		return new Block(t, blockElems);
+		return new Block(firstToken, blockElems);
 	}
 
 	public Statement statement() throws PLCCompilerException {
@@ -145,40 +148,34 @@ public class Parser implements IParser {
 		else if (t.kind() == RES_do) {
 			consume();
 			List<GuardedBlock> guardedBlocks = new ArrayList<>();
-			// You'll need to specify the ending condition for GuardedBlocks based on your grammar.
-			// Assuming it ends when it's not a guarded block.
 			while (t.kind()!=RES_od) {
-				consume();
 				GuardedBlock x=guardBlo();
 				if(x!=null){
 					guardedBlocks.add(x);}
-				consume();
 				if(t.kind()==BOX){
 					consume();
 					GuardedBlock y=guardBlo();
 					guardedBlocks.add(y);
 				}
 			}
+			consume();
 			return new DoStatement(firstToken, guardedBlocks);
 		}
 		//If Statement
 		else if (t.kind() == RES_if) {
 			consume();
 			List<GuardedBlock> guardedBlocks = new ArrayList<>();
-			// You'll need to specify the ending condition for GuardedBlocks based on your grammar.
-			// Assuming it ends when it's not a guarded block.
 			while (t.kind()!=RES_fi) {
-				consume();
 				GuardedBlock x=guardBlo();
 				if(x!=null){
 					guardedBlocks.add(x);}
-				consume();
 				if(t.kind()==BOX){
 					consume();
 					GuardedBlock y=guardBlo();
 					guardedBlocks.add(y);
 				}
 			}
+			consume();
 			return new IfStatement(firstToken, guardedBlocks);
 		}
 		// Assignment statement
@@ -190,7 +187,6 @@ public class Parser implements IParser {
 				Expr rightSide = expr();
 				return new AssignmentStatement(firstToken, lvalue, rightSide);
 			} else {
-				System.out.println("=: " + t.text());
 				throw new SyntaxException("Expected = after identifier for an assignment statement.");
 			}
 		}
@@ -225,44 +221,45 @@ public class Parser implements IParser {
 	public LValue lv() throws PLCCompilerException{
 		IToken name = t;
 		consume();
+
 		PixelSelector pixelSelector = null;
 		ChannelSelector channelSelector = null;
 		if (t.kind() == LSQUARE) {
 			pixelSelector = pixsele();
 		}
 		if (t.kind() == COLON) {
-			consume();
 			channelSelector = channelsele();
 		}
-		return new LValue(t, name, pixelSelector, channelSelector);
+
+		return new LValue(name, name, pixelSelector, channelSelector);
 	}
 	public ChannelSelector channelsele() throws PLCCompilerException{
+		IToken firstToken=t;
+		consume();
 		if (t.kind() == RES_red || t.kind() == RES_green || t.kind() == RES_blue) {
 			IToken color = t;
 			consume();
-			return new ChannelSelector(t, color);
+			return new ChannelSelector(firstToken, color);
 		}
 		throw new SyntaxException("Expected IDENT token for channel selector.");
 	}
 	public PixelSelector pixsele() throws PLCCompilerException{
-		System.out.println("Starting to parse pixel selector with token: " + t.text());
-		ExpressionParser parser = new ExpressionParser(lexer);
+			IToken firstToken=t;
+
 		consume();
-		Expr xExpr = parser.parse();
-		System.out.println("xExpr: " + xExpr.firstToken().text());
-		System.out.println("current token: " + t.text());
+		Expr xExpr =expr();
+
 		if (t.kind() != COMMA) {
 			throw new SyntaxException("Expected ',' in pixel selector.");
 		}
 		consume();
+		Expr yExpr = expr();
 
-		Expr yExpr = parser.parse();
-		System.out.println("yExpr: " + yExpr.firstToken().text());
-		System.out.println("current token: " + t.text());
 		if (t.kind() != RSQUARE) {
 			throw new SyntaxException("Expected ']' in pixel selector.");
 		}
-		return new PixelSelector(t, xExpr, yExpr);
+		consume();
+		return new PixelSelector(firstToken, xExpr, yExpr);
 	}
 	public ExpandedPixelExpr expanpix() throws PLCCompilerException{
 		ExpressionParser parser = new ExpressionParser(lexer);
@@ -275,11 +272,14 @@ public class Parser implements IParser {
 		return new ExpandedPixelExpr(t, red, grn, blu);
 	}
 	public GuardedBlock guardBlo() throws PLCCompilerException{
-		ExpressionParser parser = new ExpressionParser(lexer);
-		Expr guard = parser.parse();
-		consume();
-		Block block = block();
-		return new GuardedBlock(t, guard, block);
+		IToken firstToken=t;
+		Expr guard =expr();
+		if(t.kind()==RARROW){
+			consume();
+			Block block = block();
+			return new GuardedBlock(t, guard, block);
+		}
+		else throw new SyntaxException("gubnorarrow");
 	}
 	public StatementBlock blockst() throws PLCCompilerException{
 		Block block = block();
@@ -297,13 +297,10 @@ public class Parser implements IParser {
 		if(isKind(t.kind())){
 			typeToken = t;
 			consume();
-
 			// next token must be ident
 			if(t.kind() == IDENT){
 				Ident=t;
-
 				consume();
-
 				if(t.kind() == LPAREN) {
 					//System.out.println("LPAREN: " + t.text());
 					consume();
@@ -312,7 +309,6 @@ public class Parser implements IParser {
 					}
 					else{
 						params=Param();
-
 						if(t.kind()!=RPAREN){
 							throw new SyntaxException("missing right parentheses");
 						}
@@ -321,22 +317,21 @@ public class Parser implements IParser {
 				}else{
 					throw new SyntaxException("missing left parentheses");
 				}
-
 				if (t.kind() == BLOCK_OPEN) {
 					//System.out.println("block_open: " + t.text());
-
-
 					Block a=block();
 
+					if(t.kind()!=EOF){
+						throw new SyntaxException("aaa");
+					}
 					return new Program(firstToken,typeToken,Ident,params,a);
-
 				}
 				else {
 					throw new SyntaxException("expected block open");
 				}
 			}throw new SyntaxException("exp Ident");
 		}
-		throw new UnsupportedOperationException();
+		throw new SyntaxException("aaa");
 	}
 
 	public Expr expr() throws PLCCompilerException {
@@ -590,6 +585,8 @@ public class Parser implements IParser {
 	private Expr PrimaryExpr() throws PLCCompilerException{
 		IToken firstToken = t;
 		Expr y;
+
+
 		switch (t.kind()){
 			case NUM_LIT -> {
 				y= new NumLitExpr(t);
