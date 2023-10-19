@@ -121,6 +121,7 @@ public class Parser implements IParser {
 			if (t.kind() == SEMI) {
 				consume();
 			} else {
+				System.out.println("token that should be SEMI: " + t.text());
 				throw new SyntaxException("Expected ';' after a declaration or statement.");
 			}
 		}
@@ -174,7 +175,7 @@ public class Parser implements IParser {
 					GuardedBlock y=guardBlo();
 					guardedBlocks.add(y);
 				}
-				else{throw new SyntaxException("aaa");}
+				else{throw new SyntaxException("expected box");}
 			}
 			consume();
 			return new IfStatement(firstToken, guardedBlocks);
@@ -303,7 +304,6 @@ public class Parser implements IParser {
 				Ident=t;
 				consume();
 				if(t.kind() == LPAREN) {
-					//System.out.println("LPAREN: " + t.text());
 					consume();
 					if(t.kind() == RPAREN){
 						consume();
@@ -319,11 +319,10 @@ public class Parser implements IParser {
 					throw new SyntaxException("missing left parentheses");
 				}
 				if (t.kind() == BLOCK_OPEN) {
-					//System.out.println("block_open: " + t.text());
 					Block a=block();
 
 					if(t.kind()!=EOF){
-						throw new SyntaxException("aaa");
+						throw new SyntaxException("Expected EOF");
 					}
 					return new Program(firstToken,typeToken,Ident,params,a);
 				}
@@ -332,7 +331,7 @@ public class Parser implements IParser {
 				}
 			}throw new SyntaxException("exp Ident");
 		}
-		throw new SyntaxException("aaa");
+		throw new SyntaxException("invalid type for program");
 	}
 
 	public Expr expr() throws PLCCompilerException {
