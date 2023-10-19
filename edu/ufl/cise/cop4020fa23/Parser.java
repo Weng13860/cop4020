@@ -145,41 +145,46 @@ public class Parser implements IParser {
 			Expr writeExpr = expr();
 			return new WriteStatement(firstToken, writeExpr);
 		}
-		// Do statement
-		else if (t.kind() == RES_do) {
-			consume();
-			List<GuardedBlock> guardedBlocks = new ArrayList<>();
-			while (t.kind()!=RES_od) {
-				GuardedBlock x=guardBlo();
-				if(x!=null){
-					guardedBlocks.add(x);}
-				if(t.kind()==BOX){
-					consume();
-					GuardedBlock y=guardBlo();
-					guardedBlocks.add(y);
-				}
-			}
-			consume();
-			return new DoStatement(firstToken, guardedBlocks);
-		}
-		//If Statement
+		// If Statement
 		else if (t.kind() == RES_if) {
 			consume();
 			List<GuardedBlock> guardedBlocks = new ArrayList<>();
 			while (t.kind()!=RES_fi) {
 				GuardedBlock x=guardBlo();
 				if(x!=null){
-					guardedBlocks.add(x);}
+					guardedBlocks.add(x);
+				}
 				if(t.kind()==BOX){
 					consume();
-					GuardedBlock y=guardBlo();
-					guardedBlocks.add(y);
 				}
-				else{throw new SyntaxException("expected box");}
+				else if (t.kind()!=RES_fi) {
+					throw new SyntaxException("expected box");
+				}
 			}
 			consume();
 			return new IfStatement(firstToken, guardedBlocks);
 		}
+
+		// Do Statement
+		else if (t.kind() == RES_do) {
+			consume();
+			List<GuardedBlock> guardedBlocks = new ArrayList<>();
+			while (t.kind()!=RES_od) {
+				GuardedBlock x=guardBlo();
+				if(x!=null){
+					guardedBlocks.add(x);
+				}
+				if(t.kind()==BOX){
+					consume();
+				}
+				else if (t.kind()!=RES_od) {
+					throw new SyntaxException("expected box");
+				}
+			}
+			consume();
+			return new DoStatement(firstToken, guardedBlocks);
+		}
+
 		// Assignment statement
 		else if (t.kind() == IDENT) {
 			LValue lvalue = lv();
