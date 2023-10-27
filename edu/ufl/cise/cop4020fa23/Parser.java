@@ -69,13 +69,17 @@ public class Parser implements IParser {
 		IToken typeToken = t;
 		consume();
 		Dimension dimension = null;
-		if (t.kind() == LSQUARE) {
-			dimension = Dim();
-		}
-		if (t.kind() != IDENT) {
-			throw new SyntaxException("Expected IDENT token for name definition.");
-		}
 		IToken identToken = t;
+		if (t.kind() == LSQUARE) {
+			System.out.println("ls" + t.text());
+			dimension = Dim();
+			identToken = t;
+		}
+
+		else if (t.kind() == IDENT) {
+			identToken = t;
+		}
+
 		consume();
 		return new NameDef(t, typeToken, dimension, identToken);
 	}
@@ -99,7 +103,9 @@ public class Parser implements IParser {
 		if (t.kind() != Kind.RSQUARE) {
 			throw new SyntaxException("Expected ']' at the end of a dimension.");
 		}
+		System.out.println("in dimension" + t.text());
 		consume();
+
 		return new Dimension(firstToken, width, height);
 	}
 	public Block block() throws PLCCompilerException{
@@ -111,6 +117,7 @@ public class Parser implements IParser {
 		while (t.kind() != BLOCK_CLOSE) {
 			if (isKind(t.kind())) {
 				blockElems.add(decl());
+				System.out.println(t.text());
 			} else if (t.kind() == BLOCK_OPEN) {  // Checking for nested block
 				blockElems.add(blockst());  // Add the nested block as an element to the current block
 			} else {
@@ -206,8 +213,11 @@ public class Parser implements IParser {
 		NameDef nameDef = nameDef();
 		Expr initializer = null;
 		if (t.kind() == ASSIGN) {
+
 			consume();
+
 			initializer = expr();
+			System.out.println("here" + initializer);
 		}
 		return new Declaration(t, nameDef, initializer);
 	}
@@ -245,6 +255,7 @@ public class Parser implements IParser {
 		consume();
 		if (t.kind() == RES_red || t.kind() == RES_green || t.kind() == RES_blue) {
 			IToken color = t;
+
 			consume();
 			return new ChannelSelector(firstToken, color);
 		}
@@ -530,6 +541,7 @@ public class Parser implements IParser {
 			consume();
 			if(t.kind()==Kind.RES_green||t.kind()==Kind.RES_red||t.kind()==Kind.RES_blue){
 				x=t;
+				consume();
 				return new ChannelSelector(firstToken,x);
 			}
 			else throw new SyntaxException("Channels");
