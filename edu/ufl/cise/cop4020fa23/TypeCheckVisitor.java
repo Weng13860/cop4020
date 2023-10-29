@@ -8,7 +8,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     // Symbol Table Class
     // k = key, v = value
-    // k, v may be changed once I know what to have as parameters
     public static class SymbolTable<K, V> {
         private Stack<HashMap<K, V>> tables;
 
@@ -67,7 +66,7 @@ public class TypeCheckVisitor implements ASTVisitor {
        Type type1= assignmentStatement.getlValue().getType();
        Expr typea=assignmentStatement.getE();
        Type type2=(Type) typea.visit(this,arg);
-       if(AssignmentCompatible(type1,type2)==true){
+       if(AssignmentCompatible(type1,type2)){
            return type2;
            }
        else throw new PLCCompilerException("visttass");
@@ -108,7 +107,8 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
         NameDef nameDef = declaration.getNameDef();
-        Type type = declaration.getInitializer().getType();
+        Type type = declaration.getNameDef().getType();
+        System.out.println("NameDef: " + nameDef + "Type: " + type);
         st.insert(nameDef, type);
         return type;
     }
@@ -118,11 +118,14 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
         Type typeW = (Type) dimension.getWidth().visit(this, arg);
-        Type typeH = (Type) dimension.getHeight().visit(this, arg);
-        if(typeW == Type.INT && typeH == Type.INT){
-            return dimension;
+        if(typeW != Type.INT){
+            return "image width must be int";
         }
-        return "incorrect dim";
+        Type typeH = (Type) dimension.getHeight().visit(this, arg);
+        if(typeH != Type.INT){
+            return "image height must be int";
+        }
+        return dimension;
     }
 
     @Override
@@ -132,17 +135,26 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCCompilerException {
-        return null;
+        return expandedPixelExpr.getType();
     }
 
     @Override
     public Object visitGuardedBlock(GuardedBlock guardedBlock, Object arg) throws PLCCompilerException {
+        guardedBlock.getGuard().visit(this, arg);
+        guardedBlock.getBlock().visit(this, arg);
         return null;
     }
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        return null;
+        NameDef nameDef = identExpr.getNameDef();
+        Type identType = st.lookup(nameDef);
+
+        if (identType == null) {
+            throw new PLCCompilerException("Undeclared identifier: " + identExpr);
+        }
+
+        return identType;
     }
 
     @Override
@@ -152,12 +164,17 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
-        return null;
+        return lValue.getType();
     }
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
-        return null;
+        HashMap<NameDef, Type> currentScope = st.tables.peek();
+        if (currentScope.containsKey(nameDef)) {
+            throw new PLCCompilerException("Variable '" + nameDef + "' is already declared in the current scope.");
+        }
+        st.insert(nameDef, nameDef.getType());
+        return nameDef.getType();
     }
 
     @Override
@@ -174,22 +191,24 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-        return null;
+        return postfixExpr.visit(this, arg);
     }
 
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
-        return null;
+        return returnStatement.getE().visit(this, arg);
     }
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCCompilerException {
-        return null;
+        Type type = Type.STRING;
+        stringLitExpr.setType(type);
+        return type;
     }
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
-        return null;
+        return unaryExpr.getExpr().visit(this, arg);
     }
 
     // from PowerPoint/Slack
@@ -201,12 +220,12 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
-        return null;
+        return Type.BOOLEAN;
     }
 
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
-        return null;
+        return constExpr.getType();
     }
     public boolean AssignmentCompatible (Type type1,Type type2){
         return type1==type2||(type1==Type.PIXEL&&type2==Type.INT)||(type1==Type.IMAGE&&(type2==Type.PIXEL||type2==Type.INT||type2==Type.STRING));
