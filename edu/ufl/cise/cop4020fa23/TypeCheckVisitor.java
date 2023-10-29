@@ -64,24 +64,13 @@ public class TypeCheckVisitor implements ASTVisitor {
     }
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-        // right side of statement
-        Type rhsType = (Type) assignmentStatement.getE().visit(this, arg);
-
-        // left side of statement
-        LValue lhs = assignmentStatement.getlValue();
-        Type lhsType = st.lookup(lhs.getNameDef());
-
-        // error if no left side
-        if (lhsType == null) {
-            throw new PLCCompilerException("Undeclared variable: " + lhs);
-        }
-
-        // checking type compatibility
-        if (lhsType != rhsType) {
-            throw new PLCCompilerException("Type mismatch in assignment. Expected " + lhsType + " but found " + rhsType);
-        }
-
-        return rhsType;
+       Type type1= assignmentStatement.getlValue().getType();
+       Expr typea=assignmentStatement.getE();
+       Type type2=(Type) typea.visit(this,arg);
+       if(AssignmentCompatible(type1,type2)==true){
+           return type2;
+           }
+       else throw new PLCCompilerException("visttass");
     }
 
     @Override
@@ -103,19 +92,12 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitBlockStatement(StatementBlock statementBlock, Object arg) throws PLCCompilerException {
-        return statementBlock.getBlock().visit(this, arg);
+        return null;
     }
 
     @Override
     public Object visitChannelSelector(ChannelSelector channelSelector, Object arg) throws PLCCompilerException {
-        Kind selectedColor = channelSelector.color();
-
-        // make sure valid color
-        if (selectedColor != Kind.RES_red && selectedColor != Kind.RES_green && selectedColor != Kind.RES_blue) {
-            throw new PLCCompilerException("Invalid channel selected: " + selectedColor);
-        }
-
-        return Type.INT;
+        return null;
     }
 
     @Override
@@ -126,7 +108,7 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
         NameDef nameDef = declaration.getNameDef();
-        Type type = declaration.getNameDef().getType();
+        Type type = declaration.getInitializer().getType();
         st.insert(nameDef, type);
         return type;
     }
@@ -145,13 +127,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitDoStatement(DoStatement doStatement, Object arg) throws PLCCompilerException {
-        List<GuardedBlock> guardedBlocks = doStatement.getGuardedBlocks();
-
-        // checking each guarded block
-        for (GuardedBlock guardedBlock : guardedBlocks) {
-            guardedBlock.visit(this, arg);
-        }
-
         return null;
     }
 
@@ -167,11 +142,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        Type identType = st.lookup(identExpr.getNameDef());
-        if (identType == null) {
-            throw new PLCCompilerException("Undeclared identifier: " + identExpr);
-        }
-        return identType;
+        return null;
     }
 
     @Override
@@ -236,5 +207,8 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
         return null;
+    }
+    public boolean AssignmentCompatible (Type type1,Type type2){
+        return type1==type2||(type1==Type.PIXEL&&type2==Type.INT)||(type1==Type.IMAGE&&(type2==Type.PIXEL||type2==Type.INT||type2==Type.STRING));
     }
 }
