@@ -71,7 +71,6 @@ public class Parser implements IParser {
 		Dimension dimension = null;
 		IToken identToken = t;
 		if (t.kind() == LSQUARE) {
-			System.out.println("ls" + t.text());
 			dimension = Dim();
 			identToken = t;
 		}
@@ -103,7 +102,7 @@ public class Parser implements IParser {
 		if (t.kind() != Kind.RSQUARE) {
 			throw new SyntaxException("Expected ']' at the end of a dimension.");
 		}
-		System.out.println("in dimension" + t.text());
+
 		consume();
 
 		return new Dimension(firstToken, width, height);
@@ -117,7 +116,7 @@ public class Parser implements IParser {
 		while (t.kind() != BLOCK_CLOSE) {
 			if (isKind(t.kind())) {
 				blockElems.add(decl());
-				System.out.println(t.text());
+
 			} else if (t.kind() == BLOCK_OPEN) {  // Checking for nested block
 				blockElems.add(blockst());  // Add the nested block as an element to the current block
 			} else {
@@ -128,7 +127,7 @@ public class Parser implements IParser {
 			if (t.kind() == SEMI) {
 				consume();
 			} else {
-				System.out.println("token that should be SEMI: " + t.text());
+
 				throw new SyntaxException("Expected ';' after a declaration or statement.");
 			}
 		}
@@ -217,7 +216,7 @@ public class Parser implements IParser {
 			consume();
 
 			initializer = expr();
-			System.out.println("here" + initializer);
+
 		}
 		return new Declaration(t, nameDef, initializer);
 	}

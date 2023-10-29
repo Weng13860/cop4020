@@ -64,7 +64,13 @@ public class TypeCheckVisitor implements ASTVisitor {
     }
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-        return null;
+       Type type1= assignmentStatement.getlValue().getType();
+       Expr typea=assignmentStatement.getE();
+       Type type2=(Type) typea.visit(this,arg);
+       if(AssignmentCompatible(type1,type2)==true){
+           return type2;
+           }
+       else throw new PLCCompilerException("visttass");
     }
 
     @Override
@@ -201,5 +207,8 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
         return null;
+    }
+    public boolean AssignmentCompatible (Type type1,Type type2){
+        return type1==type2||(type1==Type.PIXEL&&type2==Type.INT)||(type1==Type.IMAGE&&(type2==Type.PIXEL||type2==Type.INT||type2==Type.STRING));
     }
 }
