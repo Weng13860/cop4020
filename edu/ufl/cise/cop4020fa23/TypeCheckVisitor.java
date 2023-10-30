@@ -52,6 +52,8 @@ public class TypeCheckVisitor implements ASTVisitor {
             return null;
         }
 
+
+
         public void insert(NameDef nameDef) {
             String name = nameDef.getName();
             Entry entry = new Entry(currentScopeID, nameDef, map.containsKey(name) ? map.get(name).peekFirst() : null);
@@ -81,20 +83,48 @@ public class TypeCheckVisitor implements ASTVisitor {
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
         st.enterScope();
 
-        // lvalue and expr types
-        Type lValueType = (Type) assignmentStatement.getlValue().visit(this, arg);
+        LValue lValue = assignmentStatement.getlValue();
+
+        if (lValue.getPixelSelector() != null) {
+            // check x and y
+            Expr xExpr = lValue.getPixelSelector().xExpr();
+            Expr yExpr = lValue.getPixelSelector().yExpr();
+            xExpr.setType(Type.INT);
+            yExpr.setType(Type.INT);
+
+            // if they're IdentExpr, check if they're declared or not
+            if (xExpr instanceof IdentExpr) {
+                String xName = ((IdentExpr) xExpr).getName();
+                if (st.lookup(xName) == null) {
+                    st.insert(new SyntheticNameDef(xName));
+                }
+            }
+            if (yExpr instanceof IdentExpr) {
+                String yName = ((IdentExpr) yExpr).getName();
+                if (st.lookup(yName) == null) {
+                    st.insert(new SyntheticNameDef(yName));
+                }
+            }
+
+            lValue.visit(this, arg);
+        }
+        else {
+            lValue.visit(this, arg);
+        }
+
+        // getting lvalue type and expr type
+        Type lValueType = lValue.getType();
         Type exprType = (Type) assignmentStatement.getE().visit(this, arg);
 
-        // checking assignment compatibility
         if (!AssignmentCompatible(lValueType, exprType)) {
             throw new TypeCheckException("Type mismatch in assignment: LValue type " + lValueType + " is not compatible with Expr type " + exprType);
         }
 
-        // Leave scope
         st.leaveScope();
 
         return null;
     }
+
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
@@ -195,16 +225,15 @@ public class TypeCheckVisitor implements ASTVisitor {
     }
 
     // code from PowerPoint
-    // edited because we do not have check() function
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
         Type typeW = (Type) dimension.getWidth().visit(this, arg);
         if(typeW != Type.INT){
-            throw new TypeCheckException("image width must be int");
+            throw new TypeCheckException("dimension width must be int");
         }
         Type typeH = (Type) dimension.getHeight().visit(this, arg);
         if(typeH != Type.INT){
-            throw new TypeCheckException("image height must be int");
+            throw new TypeCheckException("dimension height must be int");
         }
         return dimension;
     }
@@ -294,6 +323,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         // getting variable type from lvalue
         Type varType = lValue.getVarType();
+        System.out.println("varType: " + varType);
 
         // checking conditions
         PixelSelector pixelSelector = lValue.getPixelSelector();
@@ -352,22 +382,23 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
-        System.out.println("in pixsele");
-        Expr xExpr = pixelSelector.xExpr();
-        Expr yExpr = pixelSelector.yExpr();
-
-        // validating x
-        Type xType = (Type) xExpr.visit(this, arg);
-        if (xType != Type.INT) {
-            throw new TypeCheckException("PixelSelector x-coordinate must be of type INT.");
+        // if lvalue, only visit children
+        if ("LValue".equals(arg)) {
+            pixelSelector.xExpr().visit(this, arg);
+            pixelSelector.yExpr().visit(this, arg);
         }
+        // otherwise, check types
+        else {
+            Type xType = (Type) pixelSelector.xExpr().visit(this, arg);
+            if (xType != Type.INT) {
+                throw new TypeCheckException("PixelSelector x-coordinate must be of type INT.");
+            }
 
-        // validating y
-        Type yType = (Type) yExpr.visit(this, arg);
-        if (yType != Type.INT) {
-            throw new TypeCheckException("PixelSelector y-coordinate must be of type INT.");
+            Type yType = (Type) pixelSelector.yExpr().visit(this, arg);
+            if (yType != Type.INT) {
+                throw new TypeCheckException("PixelSelector y-coordinate must be of type INT.");
+            }
         }
-
         return Type.PIXEL;
     }
 
@@ -428,6 +459,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
+        booleanLitExpr.setType(Type.BOOLEAN);
         return Type.BOOLEAN;
     }
 
