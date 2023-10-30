@@ -105,12 +105,9 @@ public class TypeCheckVisitor implements ASTVisitor {
                     st.insert(new SyntheticNameDef(yName));
                 }
             }
+        }
 
-            lValue.visit(this, arg);
-        }
-        else {
-            lValue.visit(this, arg);
-        }
+        lValue.visit(this, arg);
 
         // getting lvalue type and expr type
         Type lValueType = lValue.getType();
