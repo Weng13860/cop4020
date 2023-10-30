@@ -106,11 +106,25 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
+        // visit expr first
+        Expr expr = declaration.getInitializer();
+        Type exprType = null;
+        if (expr != null) {
+            exprType = (Type) expr.visit(this, arg);
+        }
+
         NameDef nameDef = declaration.getNameDef();
-        Type type = declaration.getNameDef().getType();
-        System.out.println("NameDef: " + nameDef + "Type: " + type);
-        st.insert(nameDef, type);
-        return type;
+        nameDef.visit(this, arg);
+        Type nameDefType = nameDef.getType();
+
+        // checking conditions
+        if (expr == null || exprType == nameDefType || (exprType == Type.STRING && nameDefType == Type.IMAGE)) {
+            // insert to symbol table
+            st.insert(nameDef, nameDefType);
+            return nameDefType;
+        } else {
+            throw new PLCCompilerException("Type mismatch in declaration: " + declaration);
+        }
     }
 
     // code from PowerPoint
@@ -147,12 +161,13 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        NameDef nameDef = identExpr.getNameDef();
-        Type identType = st.lookup(nameDef);
+        Type identType = st.lookup(identExpr.getNameDef());
 
         if (identType == null) {
-            throw new PLCCompilerException("Undeclared identifier: " + identExpr);
+            throw new PLCCompilerException("Undeclared identifier: " + identExpr.getName());
         }
+
+        identExpr.setType(identType);
 
         return identType;
     }
@@ -169,10 +184,28 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
+        Dimension dimension = nameDef.getDimension();
+        Type type = nameDef.getType();
+
+        if(dimension != null){
+            if(type == Type.IMAGE){
+                nameDef.getDimension().visit(this, arg);
+            }
+            else{
+                throw new PLCCompilerException("Expected image but instead got: " + type);
+            }
+        }
+        else {
+            if (!(type == Type.INT || type == Type.BOOLEAN || type == Type.STRING || type == Type.PIXEL || type == Type.IMAGE)) {
+                throw new PLCCompilerException("Invalid type for NameDef without a dimension: " + type);
+            }
+        }
         HashMap<NameDef, Type> currentScope = st.tables.peek();
+        // if variable already in table
         if (currentScope.containsKey(nameDef)) {
             throw new PLCCompilerException("Variable '" + nameDef + "' is already declared in the current scope.");
         }
+        System.out.println("type in NameDef: " + nameDef.getType());
         st.insert(nameDef, nameDef.getType());
         return nameDef.getType();
     }
