@@ -87,7 +87,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         // checking assignment compatibility
         if (!AssignmentCompatible(lValueType, exprType)) {
-            throw new PLCCompilerException("Type mismatch in assignment: LValue type " + lValueType + " is not compatible with Expr type " + exprType);
+            throw new TypeCheckException("Type mismatch in assignment: LValue type " + lValueType + " is not compatible with Expr type " + exprType);
         }
 
         // Leave scope
@@ -248,7 +248,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         // type must be boolean
         if (guardType != Type.BOOLEAN) {
-            throw new PLCCompilerException("The guard expression in a GuardedBlock must be of type BOOLEAN.");
+            throw new TypeCheckException("The guard expression in a GuardedBlock must be of type BOOLEAN.");
         }
 
         // visit block
@@ -288,7 +288,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         // getting nameDef from table
         NameDef nameDef = st.lookup(lValue.getName());
         if (nameDef == null) {
-            throw new PLCCompilerException("Undeclared identifier: " + lValue.getName());
+            throw new TypeCheckException("Undeclared identifier: " + lValue.getName());
         }
         lValue.setNameDef(nameDef);
 
@@ -300,11 +300,11 @@ public class TypeCheckVisitor implements ASTVisitor {
         ChannelSelector channelSelector = lValue.getChannelSelector();
 
         if (pixelSelector != null && varType != Type.IMAGE) {
-            throw new PLCCompilerException("Expected IMAGE type when PixelSelector is present.");
+            throw new TypeCheckException("Expected IMAGE type when PixelSelector is present.");
         }
 
         if (channelSelector != null && (varType != Type.PIXEL && varType != Type.IMAGE)) {
-            throw new PLCCompilerException("Expected PIXEL or IMAGE type when ChannelSelector is present.");
+            throw new TypeCheckException("Expected PIXEL or IMAGE type when ChannelSelector is present.");
         }
 
         // determining the type
@@ -390,7 +390,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         // making sure it matches root
         if (returnType != root.getType()) {
-            throw new PLCCompilerException("Return type " + returnType + " does not match the enclosing program's type " + root.getType());
+            throw new TypeCheckException("Return type " + returnType + " does not match the enclosing program's type " + root.getType());
         }
 
         return returnType;
@@ -534,7 +534,7 @@ public class TypeCheckVisitor implements ASTVisitor {
             return Type.INT;
         }
 
-        throw new PLCCompilerException("Invalid LValue configuration.");
+        throw new TypeCheckException("Invalid LValue configuration.");
     }
 
     // postfixexpr helper
@@ -553,7 +553,7 @@ public class TypeCheckVisitor implements ASTVisitor {
             return Type.INT;
         }
 
-        throw new PLCCompilerException("Invalid PostfixExpr configuration.");
+        throw new TypeCheckException("Invalid PostfixExpr configuration.");
     }
 
     // unary helper
@@ -566,6 +566,6 @@ public class TypeCheckVisitor implements ASTVisitor {
             return Type.INT;
         }
 
-        throw new PLCCompilerException("Invalid UnaryExpr configuration for type: " + exprType + " and operation: " + op);
+        throw new TypeCheckException("Invalid UnaryExpr configuration for type: " + exprType + " and operation: " + op);
     }
 }
