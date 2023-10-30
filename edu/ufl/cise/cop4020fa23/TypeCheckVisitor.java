@@ -286,7 +286,33 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
-        return lValue.getType();
+        // getting nameDef from table
+        NameDef nameDef = st.lookup(lValue.getName());
+        if (nameDef == null) {
+            throw new PLCCompilerException("Undeclared identifier: " + lValue.getName());
+        }
+        lValue.setNameDef(nameDef);
+
+        // getting variable type from lvalue
+        Type varType = lValue.getVarType();
+
+        // checking conditions
+        PixelSelector pixelSelector = lValue.getPixelSelector();
+        ChannelSelector channelSelector = lValue.getChannelSelector();
+
+        if (pixelSelector != null && varType != Type.IMAGE) {
+            throw new PLCCompilerException("Expected IMAGE type when PixelSelector is present.");
+        }
+
+        if (channelSelector != null && (varType != Type.PIXEL && varType != Type.IMAGE)) {
+            throw new PLCCompilerException("Expected PIXEL or IMAGE type when ChannelSelector is present.");
+        }
+
+        // determining the type
+        Type finalType = inferLValueType(varType, pixelSelector, channelSelector);
+        lValue.setType(finalType);
+
+        return finalType;
     }
 
     @Override
@@ -503,4 +529,21 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
     }
 
+    private Type inferLValueType(Type varType, PixelSelector pixelSelector, ChannelSelector channelSelector) throws PLCCompilerException {
+        if (pixelSelector == null && channelSelector == null) {
+            return varType;
+        } else if (varType == Type.IMAGE) {
+            if (pixelSelector != null && channelSelector == null) {
+                return Type.PIXEL;
+            } else if (pixelSelector != null && channelSelector != null) {
+                return Type.INT;
+            } else if (pixelSelector == null && channelSelector != null) {
+                return Type.IMAGE;
+            }
+        } else if (varType == Type.PIXEL && channelSelector != null) {
+            return Type.INT;
+        }
+
+        throw new PLCCompilerException("Invalid LValue configuration.");
+    }
 }
