@@ -392,21 +392,13 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
         Type exprType = (Type) postfixExpr.primary().visit(this, arg);
-        PixelSelector pixel = postfixExpr.pixel();
-        ChannelSelector channel = postfixExpr.channel();
-        postfixExpr.pixel().visit(this, arg);
-        postfixExpr.channel().visit(this, arg);
 
-        System.out.println("pixel: " + pixel + " channel: " + channel + " type: " + exprType);
-        if (pixel != null && channel != null) {
-            return Type.INT;
-        } else if (pixel != null) {
-            return Type.PIXEL;
-        } else if (channel != null) {
-            return Type.IMAGE;
-        } else {
-            return exprType;
-        }
+        // inferring postfix type based on pixel and channel
+        Type inferredType = inferPostfixExprType(exprType, postfixExpr.pixel(), postfixExpr.channel());
+
+        postfixExpr.setType(inferredType);
+
+        return inferredType;
     }
 
     @Override
@@ -430,7 +422,18 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
-        return unaryExpr.getExpr().visit(this, arg);
+        // get expr type
+        Type exprType = (Type) unaryExpr.getExpr().visit(this, arg);
+
+        // getting the operation kind
+        Kind opKind = unaryExpr.getOp();
+
+        // inferring unary type
+        Type inferredType = inferUnaryExprType(exprType, opKind);
+
+        unaryExpr.setType(inferredType);
+
+        return inferredType;
     }
 
     // from PowerPoint/Slack
@@ -445,7 +448,8 @@ public class TypeCheckVisitor implements ASTVisitor {
         return Type.BOOLEAN;
     }
 
-    // helper functions based on HW 3 tables
+    // -----helper functions based on HW 3 tables----- //
+    // binary helper
     private Type inferBinaryType(Type leftType, Kind opKind, Type rightType) {
         switch (opKind) {
             // pixel ops
@@ -515,6 +519,8 @@ public class TypeCheckVisitor implements ASTVisitor {
         return Type.INT;
 
     }
+
+    // assignment helper
     private boolean AssignmentCompatible(Type lValueType, Type exprType) {
         if (lValueType == exprType) {
             return true;
@@ -529,6 +535,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
     }
 
+    // LValue helper
     private Type inferLValueType(Type varType, PixelSelector pixelSelector, ChannelSelector channelSelector) throws PLCCompilerException {
         if (pixelSelector == null && channelSelector == null) {
             return varType;
@@ -545,5 +552,37 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
 
         throw new PLCCompilerException("Invalid LValue configuration.");
+    }
+
+    // postfixexpr helper
+    private Type inferPostfixExprType(Type exprType, PixelSelector pixelSelector, ChannelSelector channelSelector) throws PLCCompilerException {
+        if (pixelSelector == null && channelSelector == null) {
+            return exprType;
+        } else if (exprType == Type.IMAGE) {
+            if (pixelSelector != null && channelSelector == null) {
+                return Type.PIXEL;
+            } else if (pixelSelector != null && channelSelector != null) {
+                return Type.INT;
+            } else if (pixelSelector == null && channelSelector != null) {
+                return Type.IMAGE;
+            }
+        } else if (exprType == Type.PIXEL && channelSelector != null) {
+            return Type.INT;
+        }
+
+        throw new PLCCompilerException("Invalid PostfixExpr configuration.");
+    }
+
+    // unary helper
+    private Type inferUnaryExprType(Type exprType, Kind op) throws PLCCompilerException {
+        if (exprType == Type.BOOLEAN && op == Kind.BANG) {
+            return Type.BOOLEAN;
+        } else if (exprType == Type.INT && op == Kind.MINUS) {
+            return Type.INT;
+        } else if (exprType == Type.IMAGE && (op == Kind.RES_width || op == Kind.RES_height)) {
+            return Type.INT;
+        }
+
+        throw new PLCCompilerException("Invalid UnaryExpr configuration for type: " + exprType + " and operation: " + op);
     }
 }
