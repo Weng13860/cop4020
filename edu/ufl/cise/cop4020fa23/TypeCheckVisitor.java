@@ -159,10 +159,9 @@ public class TypeCheckVisitor implements ASTVisitor {
         return trueType;
     }
 
-    // need to edit but this is based on the format from HW constraints
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
-        if (constExpr.getName().equals('Z')) {
+        if (constExpr.getName().equals("Z")) {
             constExpr.setType(Type.INT);
         } else {
             constExpr.setType(Type.PIXEL);
@@ -357,32 +356,16 @@ public class TypeCheckVisitor implements ASTVisitor {
         Expr xExpr = pixelSelector.xExpr();
         Expr yExpr = pixelSelector.yExpr();
 
-        if (xExpr instanceof IdentExpr) {
-            IdentExpr identX = (IdentExpr) xExpr;
-            identX.visit(this, arg);
-            if (st.lookup(identX.getName()) == null) {
-                st.insert(identX.getNameDef());
-            }
-        } else if (!(xExpr instanceof NumLitExpr)) {
-            throw new TypeCheckException("ExprxExpr must be an IdentExp or NumLitExpr.");
-        }
-
-        if (yExpr instanceof IdentExpr) {
-            IdentExpr identY = (IdentExpr) yExpr;
-            identY.visit(this, arg);
-            if (st.lookup(identY.getName()) == null) {
-                st.insert(identY.getNameDef());
-            }
-        } else if (!(yExpr instanceof NumLitExpr)) {
-            throw new TypeCheckException("ExpryExpr must be an IdentExp or NumLitExpr.");
-        }
-
-        // validating x and y types
+        // validating x
         Type xType = (Type) xExpr.visit(this, arg);
-        Type yType = (Type) yExpr.visit(this, arg);
+        if (xType != Type.INT) {
+            throw new TypeCheckException("PixelSelector x-coordinate must be of type INT.");
+        }
 
-        if (xType != Type.INT || yType != Type.INT) {
-            throw new TypeCheckException("PixelSelector coordinates must be of type INT.");
+        // validating y
+        Type yType = (Type) yExpr.visit(this, arg);
+        if (yType != Type.INT) {
+            throw new TypeCheckException("PixelSelector y-coordinate must be of type INT.");
         }
 
         return Type.PIXEL;
