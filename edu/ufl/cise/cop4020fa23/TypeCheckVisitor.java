@@ -79,13 +79,21 @@ public class TypeCheckVisitor implements ASTVisitor {
     }
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-       Type type1= assignmentStatement.getlValue().getType();
-       Expr typea=assignmentStatement.getE();
-       Type type2=(Type) typea.visit(this,arg);
-       if(AssignmentCompatible(type1,type2)){
-           return type2;
-       }
-       else throw new TypeCheckException("Type mismatch in assignment statement. Type 1: " + type1 + ", Type2: " + type2);
+        st.enterScope();
+
+        // lvalue and expr types
+        Type lValueType = (Type) assignmentStatement.getlValue().visit(this, arg);
+        Type exprType = (Type) assignmentStatement.getE().visit(this, arg);
+
+        // checking assignment compatibility
+        if (!AssignmentCompatible(lValueType, exprType)) {
+            throw new PLCCompilerException("Type mismatch in assignment: LValue type " + lValueType + " is not compatible with Expr type " + exprType);
+        }
+
+        // Leave scope
+        st.leaveScope();
+
+        return null;
     }
 
     @Override
@@ -120,12 +128,14 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitBlockStatement(StatementBlock statementBlock, Object arg) throws PLCCompilerException {
-        return null;
+        return statementBlock.getBlock().visit(this, arg);
     }
 
     @Override
     public Object visitChannelSelector(ChannelSelector channelSelector, Object arg) throws PLCCompilerException {
-        return null;
+        Kind selectedChannel = channelSelector.color();
+        return selectedChannel;
+
     }
 
     @Override
@@ -137,11 +147,11 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         // checking the conditions
         if (guardType != Type.BOOLEAN) {
-            throw new PLCCompilerException("Guard expression in a conditional must be of type BOOLEAN.");
+            throw new TypeCheckException("Guard expression in a conditional must be of type BOOLEAN.");
         }
 
         if (trueType != falseType) {
-            throw new PLCCompilerException("True and false expressions in a conditional must have the same type.");
+            throw new TypeCheckException("True and false expressions in a conditional must have the same type.");
         }
 
         // return cond expr type
@@ -202,6 +212,13 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitDoStatement(DoStatement doStatement, Object arg) throws PLCCompilerException {
+        List<GuardedBlock> guardedBlocks = doStatement.getGuardedBlocks();
+
+        // visiting each guard block
+        for (GuardedBlock guardedBlock : guardedBlocks) {
+            guardedBlock.visit(this, arg);
+        }
+
         return null;
     }
 
@@ -227,9 +244,18 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitGuardedBlock(GuardedBlock guardedBlock, Object arg) throws PLCCompilerException {
-        guardedBlock.getGuard().visit(this, arg);
+        // visit guard
+        Type guardType = (Type) guardedBlock.getGuard().visit(this, arg);
+
+        // type must be boolean
+        if (guardType != Type.BOOLEAN) {
+            throw new PLCCompilerException("The guard expression in a GuardedBlock must be of type BOOLEAN.");
+        }
+
+        // visit block
         guardedBlock.getBlock().visit(this, arg);
-        return null;
+
+        return guardType;
     }
 
     @Override
@@ -248,6 +274,13 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
+        List<GuardedBlock> guardedBlocks = ifStatement.getGuardedBlocks();
+
+        // visiting each guard block
+        for (GuardedBlock guardedBlock : guardedBlocks) {
+            guardedBlock.visit(this, arg);
+        }
+
         return null;
     }
 
@@ -352,7 +385,14 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
-        return returnStatement.getE().visit(this, arg);
+        Type returnType = (Type) returnStatement.getE().visit(this, arg);
+
+        // making sure it matches root
+        if (returnType != root.getType()) {
+            throw new PLCCompilerException("Return type " + returnType + " does not match the enclosing program's type " + root.getType());
+        }
+
+        return returnType;
     }
 
     @Override
@@ -379,10 +419,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         return Type.BOOLEAN;
     }
 
-    public boolean AssignmentCompatible (Type type1,Type type2){
-        return type1==type2||(type1==Type.PIXEL&&type2==Type.INT)||(type1==Type.IMAGE&&(type2==Type.PIXEL||type2==Type.INT||type2==Type.STRING));
-    }
-
+    // helper functions based on HW 3 tables
     private Type inferBinaryType(Type leftType, Kind opKind, Type rightType) {
         switch (opKind) {
             // pixel ops
@@ -451,6 +488,19 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
         return Type.INT;
 
+    }
+    private boolean AssignmentCompatible(Type lValueType, Type exprType) {
+        if (lValueType == exprType) {
+            return true;
+        }
+        switch (lValueType) {
+            case PIXEL:
+                return exprType == Type.INT;
+            case IMAGE:
+                return exprType == Type.PIXEL || exprType == Type.INT || exprType == Type.STRING;
+            default:
+                return false;
+        }
     }
 
 }
