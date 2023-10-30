@@ -2,48 +2,64 @@ package edu.ufl.cise.cop4020fa23;
 
 import edu.ufl.cise.cop4020fa23.ast.*;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
+import edu.ufl.cise.cop4020fa23.exceptions.TypeCheckException;
+
 import java.util.*;
 
 public class TypeCheckVisitor implements ASTVisitor {
 
     // Symbol Table Class
     // k = key, v = value
-    public static class SymbolTable<K, V> {
-        private Stack<HashMap<K, V>> tables;
+    public static class SymbolTable {
+        private Stack<Integer> scopeStack = new Stack<>();
+        private int currentScopeID = 0;
+        private Map<String, LinkedList<Entry>> map = new HashMap<>();
+
+        public static class Entry {
+            int scopeID;
+            NameDef nameDef;
+            Entry previous;
+
+            Entry(int scopeID, NameDef nameDef, Entry previous) {
+                this.scopeID = scopeID;
+                this.nameDef = nameDef;
+                this.previous = previous;
+            }
+        }
 
         public SymbolTable() {
-            tables = new Stack<>();
-            tables.push(new HashMap<>());
-        }
-
-        // searching table
-        public V lookup(K key) {
-            for (int i = tables.size() - 1; i >= 0; i--) {
-                if (tables.get(i).containsKey(key)) {
-                    return tables.get(i).get(key);
-                }
-            }
-            // return nothing if key isn't found
-            return null;
-        }
-
-        public void insert(K key, V value) {
-            tables.peek().put(key, value);
+            enterScope();
         }
 
         public void enterScope() {
-            tables.push(new HashMap<>());
+            currentScopeID++;
+            scopeStack.push(currentScopeID);
         }
 
         public void leaveScope() {
-            if (tables.size() == 1) {
-                throw new IllegalStateException("Cannot leave the global scope");
+            scopeStack.pop();
+        }
+
+        public NameDef lookup(String name) {
+            LinkedList<Entry> entries = map.get(name);
+            if (entries == null) return null;
+
+            for (Entry entry : entries) {
+                if (scopeStack.contains(entry.scopeID)) {
+                    return entry.nameDef;
+                }
             }
-            tables.pop();
+            return null;
+        }
+
+        public void insert(NameDef nameDef) {
+            String name = nameDef.getName();
+            Entry entry = new Entry(currentScopeID, nameDef, map.containsKey(name) ? map.get(name).peekFirst() : null);
+            map.computeIfAbsent(name, k -> new LinkedList<>()).addFirst(entry);
         }
     }
 
-    private SymbolTable<NameDef, Type> st = new SymbolTable<>();
+    private SymbolTable st = new SymbolTable();
     private Program root;
 
     // from PowerPoint/Slack
@@ -68,8 +84,8 @@ public class TypeCheckVisitor implements ASTVisitor {
        Type type2=(Type) typea.visit(this,arg);
        if(AssignmentCompatible(type1,type2)){
            return type2;
-           }
-       else throw new PLCCompilerException("visttass");
+       }
+       else throw new TypeCheckException("Type mismatch in assignment statement. Type 1: " + type1 + ", Type2: " + type2);
     }
 
     @Override
@@ -120,10 +136,10 @@ public class TypeCheckVisitor implements ASTVisitor {
         // checking conditions
         if (expr == null || exprType == nameDefType || (exprType == Type.STRING && nameDefType == Type.IMAGE)) {
             // insert to symbol table
-            st.insert(nameDef, nameDefType);
+            st.insert(nameDef);
             return nameDefType;
         } else {
-            throw new PLCCompilerException("Type mismatch in declaration: " + declaration);
+            throw new TypeCheckException("Type mismatch in declaration: " + declaration);
         }
     }
 
@@ -133,11 +149,11 @@ public class TypeCheckVisitor implements ASTVisitor {
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
         Type typeW = (Type) dimension.getWidth().visit(this, arg);
         if(typeW != Type.INT){
-            return "image width must be int";
+            throw new TypeCheckException("image width must be int");
         }
         Type typeH = (Type) dimension.getHeight().visit(this, arg);
         if(typeH != Type.INT){
-            return "image height must be int";
+            throw new TypeCheckException("image height must be int");
         }
         return dimension;
     }
@@ -149,7 +165,22 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCCompilerException {
-        return expandedPixelExpr.getType();
+        Expr redExpr = expandedPixelExpr.getRed();
+        Expr greenExpr = expandedPixelExpr.getGreen();
+        Expr blueExpr = expandedPixelExpr.getBlue();
+
+        // validating red, green, and blue expression types
+        Type redType = (Type) redExpr.visit(this, arg);
+        Type greenType = (Type) greenExpr.visit(this, arg);
+        Type blueType = (Type) blueExpr.visit(this, arg);
+
+        if (redType != Type.INT || greenType != Type.INT || blueType != Type.INT) {
+            throw new TypeCheckException("Components of an ExpandedPixelExpr must be of type INT");
+        }
+
+        // set type pixel
+        expandedPixelExpr.setType(Type.PIXEL);
+        return Type.PIXEL;
     }
 
     @Override
@@ -161,15 +192,16 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        Type identType = st.lookup(identExpr.getNameDef());
+        NameDef identNameDef = st.lookup(identExpr.getName());
 
-        if (identType == null) {
-            throw new PLCCompilerException("Undeclared identifier: " + identExpr.getName());
+        if (identNameDef == null) {
+            throw new TypeCheckException("Undeclared identifier: " + identExpr.getName());
         }
 
-        identExpr.setType(identType);
+        identExpr.setNameDef(identNameDef);
+        identExpr.setType(identNameDef.getType());
 
-        return identType;
+        return identNameDef.getType();
     }
 
     @Override
@@ -188,25 +220,26 @@ public class TypeCheckVisitor implements ASTVisitor {
         Type type = nameDef.getType();
 
         if(dimension != null){
-            if(type == Type.IMAGE){
-                nameDef.getDimension().visit(this, arg);
+            if(type != Type.IMAGE){
+                throw new TypeCheckException("Expected image type for NameDef with a dimension but instead got: " + type);
             }
-            else{
-                throw new PLCCompilerException("Expected image but instead got: " + type);
-            }
-        }
-        else {
+            nameDef.getDimension().visit(this, arg);
+        } else {
             if (!(type == Type.INT || type == Type.BOOLEAN || type == Type.STRING || type == Type.PIXEL || type == Type.IMAGE)) {
-                throw new PLCCompilerException("Invalid type for NameDef without a dimension: " + type);
+                throw new TypeCheckException("Invalid type for NameDef without a dimension: " + type);
             }
         }
-        HashMap<NameDef, Type> currentScope = st.tables.peek();
-        // if variable already in table
-        if (currentScope.containsKey(nameDef)) {
-            throw new PLCCompilerException("Variable '" + nameDef + "' is already declared in the current scope.");
+
+        // checking if the variable is already declared in the current scope
+        if (st.lookup(nameDef.getName()) != null) {
+            throw new TypeCheckException("Variable '" + nameDef.getName() + "' is already declared in the current scope.");
         }
+
         System.out.println("type in NameDef: " + nameDef.getType());
-        st.insert(nameDef, nameDef.getType());
+
+        // insert the NameDef into the symbol table
+        st.insert(nameDef);
+
         return nameDef.getType();
     }
 
@@ -219,12 +252,60 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
-        return null;
+        System.out.println("in pixsele");
+        Expr xExpr = pixelSelector.xExpr();
+        Expr yExpr = pixelSelector.yExpr();
+
+        if (xExpr instanceof IdentExpr) {
+            IdentExpr identX = (IdentExpr) xExpr;
+            identX.visit(this, arg);
+            if (st.lookup(identX.getName()) == null) {
+                st.insert(identX.getNameDef());
+            }
+        } else if (!(xExpr instanceof NumLitExpr)) {
+            throw new TypeCheckException("ExprxExpr must be an IdentExp or NumLitExpr.");
+        }
+
+        if (yExpr instanceof IdentExpr) {
+            IdentExpr identY = (IdentExpr) yExpr;
+            identY.visit(this, arg);
+            if (st.lookup(identY.getName()) == null) {
+                st.insert(identY.getNameDef());
+            }
+        } else if (!(yExpr instanceof NumLitExpr)) {
+            throw new TypeCheckException("ExpryExpr must be an IdentExp or NumLitExpr.");
+        }
+
+        // validating x and y types
+        Type xType = (Type) xExpr.visit(this, arg);
+        Type yType = (Type) yExpr.visit(this, arg);
+
+        if (xType != Type.INT || yType != Type.INT) {
+            throw new TypeCheckException("PixelSelector coordinates must be of type INT.");
+        }
+
+        return Type.PIXEL;
     }
+
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-        return postfixExpr.visit(this, arg);
+        Type exprType = (Type) postfixExpr.primary().visit(this, arg);
+        PixelSelector pixel = postfixExpr.pixel();
+        ChannelSelector channel = postfixExpr.channel();
+        postfixExpr.pixel().visit(this, arg);
+        postfixExpr.channel().visit(this, arg);
+
+        System.out.println("pixel: " + pixel + " channel: " + channel + " type: " + exprType);
+        if (pixel != null && channel != null) {
+            return Type.INT;
+        } else if (pixel != null) {
+            return Type.PIXEL;
+        } else if (channel != null) {
+            return Type.IMAGE;
+        } else {
+            return exprType;
+        }
     }
 
     @Override
