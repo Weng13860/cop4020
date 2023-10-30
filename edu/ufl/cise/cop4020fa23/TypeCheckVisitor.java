@@ -90,7 +90,20 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
-        return null;
+        // getting left & right expr
+        Type leftType = (Type) binaryExpr.getLeftExpr().visit(this, arg);
+        Type rightType = (Type) binaryExpr.getRightExpr().visit(this, arg);
+        Kind opKind = binaryExpr.getOpKind();
+
+
+        // infer type based on types
+        Type resultType = inferBinaryType(leftType, opKind, rightType);
+
+        // setting type to inferred type
+        binaryExpr.setType(resultType);
+        System.out.println("resultType: " + resultType);
+
+        return resultType;
     }
 
     // from PowerPoint
@@ -117,7 +130,36 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCCompilerException {
-        return null;
+        // getting types of the guard, true, and false expressions
+        Type guardType = (Type) conditionalExpr.getGuardExpr().visit(this, arg);
+        Type trueType = (Type) conditionalExpr.getTrueExpr().visit(this, arg);
+        Type falseType = (Type) conditionalExpr.getFalseExpr().visit(this, arg);
+
+        // checking the conditions
+        if (guardType != Type.BOOLEAN) {
+            throw new PLCCompilerException("Guard expression in a conditional must be of type BOOLEAN.");
+        }
+
+        if (trueType != falseType) {
+            throw new PLCCompilerException("True and false expressions in a conditional must have the same type.");
+        }
+
+        // return cond expr type
+        conditionalExpr.setType(trueType);
+        return trueType;
+    }
+
+    // need to edit but this is based on the format from HW constraints
+    @Override
+    public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
+        if (constExpr.getName().equals('Z')) {
+            constExpr.setType(Type.INT);
+        } else {
+            constExpr.setType(Type.PIXEL);
+        }
+
+        // Return the type
+        return constExpr.getType();
     }
 
     @Override
@@ -337,11 +379,78 @@ public class TypeCheckVisitor implements ASTVisitor {
         return Type.BOOLEAN;
     }
 
-    @Override
-    public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
-        return constExpr.getType();
-    }
     public boolean AssignmentCompatible (Type type1,Type type2){
         return type1==type2||(type1==Type.PIXEL&&type2==Type.INT)||(type1==Type.IMAGE&&(type2==Type.PIXEL||type2==Type.INT||type2==Type.STRING));
     }
+
+    private Type inferBinaryType(Type leftType, Kind opKind, Type rightType) {
+        switch (opKind) {
+            // pixel ops
+            case BITAND:
+            case BITOR:
+                if (leftType == Type.PIXEL && rightType == Type.PIXEL) {
+                    return Type.PIXEL;
+                }
+                break;
+
+            // boolean ops
+            case AND:
+            case OR:
+                if (leftType == Type.BOOLEAN && rightType == Type.BOOLEAN) {
+                    return Type.BOOLEAN;
+                }
+                break;
+
+            // comparison ops
+            case LT:
+            case GT:
+            case LE:
+            case GE:
+                if (leftType == Type.INT && rightType == Type.INT) {
+                    return Type.BOOLEAN;
+                }
+                break;
+
+            // eq
+            case EQ:
+                if (leftType == rightType) {
+                    return Type.BOOLEAN;
+                }
+                break;
+
+            // exponents
+            case EXP:
+                if (leftType == Type.INT && rightType == Type.INT) {
+                    return Type.INT;
+                } else if (leftType == Type.PIXEL && rightType == Type.INT) {
+                    return Type.PIXEL;
+                }
+                break;
+
+
+            case PLUS:
+                if (leftType == rightType) {
+                    return leftType;
+                }
+                break;
+
+            // arithmetic ops
+            case MINUS:
+            case TIMES:
+            case DIV:
+            case MOD:
+                if ((leftType == Type.INT || leftType == Type.PIXEL || leftType == Type.IMAGE) && leftType == rightType) {
+                    return leftType;
+                } else if ((leftType == Type.PIXEL || leftType == Type.IMAGE) && rightType == Type.INT) {
+                    return leftType;
+                }
+                break;
+
+            default:
+
+        }
+        return Type.INT;
+
+    }
+
 }
