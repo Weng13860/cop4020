@@ -136,7 +136,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         // setting type to inferred type
         binaryExpr.setType(resultType);
-        System.out.println("resultType: " + resultType);
 
         return resultType;
     }
@@ -320,7 +319,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         // getting variable type from lvalue
         Type varType = lValue.getVarType();
-        System.out.println("varType: " + varType);
 
         // checking conditions
         PixelSelector pixelSelector = lValue.getPixelSelector();
@@ -356,13 +354,6 @@ public class TypeCheckVisitor implements ASTVisitor {
                 throw new TypeCheckException("Invalid type for NameDef without a dimension: " + type);
             }
         }
-
-        // checking if the variable is already declared in the current scope
-        if (st.lookup(nameDef.getName()) != null) {
-            throw new TypeCheckException("Variable '" + nameDef.getName() + "' is already declared in the current scope.");
-        }
-
-        System.out.println("type in NameDef: " + nameDef.getType());
 
         // insert the NameDef into the symbol table
         st.insert(nameDef);
@@ -403,6 +394,7 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
         Type exprType = (Type) postfixExpr.primary().visit(this, arg);
+        postfixExpr.pixel().visit(this,arg);
 
         // inferring postfix type based on pixel and channel
         Type inferredType = inferPostfixExprType(exprType, postfixExpr.pixel(), postfixExpr.channel());
