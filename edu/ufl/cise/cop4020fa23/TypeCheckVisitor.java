@@ -37,8 +37,12 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
 
         public void leaveScope() {
-            scopeStack.pop();
+            int poppedScope = scopeStack.pop();
+
+            // remove entries associated with the popped scope
+            map.values().forEach(entries -> entries.removeIf(entry -> entry.scopeID == poppedScope));
         }
+
 
         public NameDef lookup(String name) {
             LinkedList<Entry> entries = map.get(name);
@@ -54,7 +58,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         public void insert(NameDef nameDef) {
             String name = nameDef.getName();
-            Entry entry = new Entry(currentScopeID, nameDef, map.containsKey(name) ? map.get(name).peekFirst() : null);
+            Entry entry = new Entry(currentScopeID, nameDef, map.containsKey(name) ? map.get(name).peek() : null);
             map.computeIfAbsent(name, k -> new LinkedList<>()).addFirst(entry);
         }
     }
@@ -71,6 +75,9 @@ public class TypeCheckVisitor implements ASTVisitor {
         st.enterScope();
         List<NameDef> params = program.getParams();
         for(NameDef param : params){
+            if(st.lookup(param.getName()) != null){
+                throw new TypeCheckException("Variable name " + param.getName() + " already exists.");
+            }
             param.visit(this, arg);
         }
         program.getBlock().visit(this, arg);
