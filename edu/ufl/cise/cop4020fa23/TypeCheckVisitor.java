@@ -217,6 +217,11 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         NameDef nameDef = declaration.getNameDef();
 
+        // checking for redeclaration in the same scope
+        if (st.lookup(nameDef.getName()) != null && nameDef.getType() == st.lookup(nameDef.getName()).getType()) {
+            throw new TypeCheckException("Variable name '" + nameDef.getName() + "' already exists in the current scope.");
+        }
+
         nameDef.visit(this, arg);
         Type nameDefType = nameDef.getType();
 
