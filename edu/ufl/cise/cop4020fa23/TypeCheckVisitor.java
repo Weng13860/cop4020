@@ -52,8 +52,6 @@ public class TypeCheckVisitor implements ASTVisitor {
             return null;
         }
 
-
-
         public void insert(NameDef nameDef) {
             String name = nameDef.getName();
             Entry entry = new Entry(currentScopeID, nameDef, map.containsKey(name) ? map.get(name).peekFirst() : null);
@@ -130,6 +128,10 @@ public class TypeCheckVisitor implements ASTVisitor {
         Type rightType = (Type) binaryExpr.getRightExpr().visit(this, arg);
         Kind opKind = binaryExpr.getOpKind();
 
+        // handle addition of different types
+        if (opKind == Kind.PLUS && (leftType != rightType)) {
+            throw new TypeCheckException("Type mismatch in addition: " + leftType + " and " + rightType);
+        }
 
         // infer type based on types
         Type resultType = inferBinaryType(leftType, opKind, rightType);
@@ -207,6 +209,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
 
         NameDef nameDef = declaration.getNameDef();
+
         nameDef.visit(this, arg);
         Type nameDefType = nameDef.getType();
 
