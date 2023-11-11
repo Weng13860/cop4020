@@ -154,17 +154,17 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitProgram(Program program, Object arg) throws PLCCompilerException {
         // write package name
         if (packageName != null) {
-            javaCode.append("import ").append(packageToDirectory(packageName)).append(".*;\n\n");
+            javaCode.append("package ").append(packageToDirectory(packageName)).append(";\n\n");
         }
 
         System.out.println(packageName);
-        javaCode.append("public class ").append(program.getName());
+        javaCode.append("public class ").append(program.getName()).append("{\n").append("public static ").append(typetostring(program.getType())).append(" apply(){}");
 
         // visit params (if any)
         for (NameDef param : program.getParams()) {
             param.visit(this, arg);
         }
-        javaCode.append("{\n");
+//        javaCode.append("{\n");
 
         // visit block
         program.getBlock().visit(this, arg);
@@ -202,4 +202,14 @@ public class CodeGenVisitor implements ASTVisitor {
         return javaCode.toString();
     }
 
+    public String typetostring(Type type){
+        switch (type){
+            case INT,BOOLEAN,VOID->{return type.toString().toLowerCase();}
+            case STRING -> {return "String";}
+            default -> {
+                return null;
+            }
+
+        }
+    }
 }
