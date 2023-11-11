@@ -24,6 +24,10 @@ public class ComponentFactory {
 		public static IParser makeExpressionParser(ILexer lexer) throws LexicalException {
 			return new ExpressionParser(lexer);
 		}
+
+		public static ASTVisitor makeCodeGenerator(){
+			return new CodeGenVisitor(CodeGenVisitor.getPackageName());
+		}
 		
 		public static IParser makeExpressionParser(String input) throws LexicalException {
 			return new ExpressionParser(makeLexer(input));

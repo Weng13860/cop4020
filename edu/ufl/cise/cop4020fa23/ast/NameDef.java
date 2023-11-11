@@ -104,14 +104,14 @@ public class NameDef extends AST {
 //	/**
 //	 * @param string
 //	 */
-//	public void setJavaName(String string) {
-//		javaName = string;
-//	}
-//	
-//	public String getJavaName() {
-//		if (javaName != null) return javaName;
-//		throw new IllegalStateException("javaName not initialized");
-//	}
+	public void setJavaName(String string) {
+		javaName = string;
+	}
+
+	public String getJavaName() {
+		if (javaName != null) return javaName;
+		throw new IllegalStateException("javaName not initialized");
+	}
 	
 	
 }

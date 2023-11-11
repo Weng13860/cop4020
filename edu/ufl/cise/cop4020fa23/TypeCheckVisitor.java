@@ -370,6 +370,12 @@ public class TypeCheckVisitor implements ASTVisitor {
             }
         }
 
+        // generate java name
+        String javaName = generateUniqueJavaName(nameDef.getName());
+
+        // setting java name in nameDef
+        nameDef.setJavaName(javaName);
+
         // insert the NameDef into the symbol table
         st.insert(nameDef);
 
@@ -603,5 +609,18 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
 
         throw new TypeCheckException("Invalid UnaryExpr configuration for type: " + exprType + " and operation: " + op);
+    }
+
+    private String generateUniqueJavaName(String baseName) {
+        int suffix = 1;
+        String javaName = baseName + "$" + suffix;
+
+        // Check if the generated JavaName is already in use, incrementing the suffix if necessary
+        while (st.lookup(javaName) != null) {
+            suffix++;
+            javaName = baseName + "$" + suffix;
+        }
+
+        return javaName;
     }
 }

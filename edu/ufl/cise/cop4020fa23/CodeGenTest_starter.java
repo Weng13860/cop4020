@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import edu.ufl.cise.cop4020fa23.DynamicJavaCompileAndExecute.DynamicClassLoader;
 import edu.ufl.cise.cop4020fa23.DynamicJavaCompileAndExecute.DynamicCompiler;
 import edu.ufl.cise.cop4020fa23.DynamicJavaCompileAndExecute.PLCLangExec;
+import edu.ufl.cise.cop4020fa23.CodeGenVisitor;
 import edu.ufl.cise.cop4020fa23.ast.AST;
 import edu.ufl.cise.cop4020fa23.ast.Program;
 import edu.ufl.cise.cop4020fa23.ast.ASTVisitor;
@@ -20,9 +21,9 @@ import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import edu.ufl.cise.cop4020fa23.exceptions.TypeCheckException;
 import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;
-import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
-import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
-import edu.ufl.cise.cop4020fa23.runtime.PixelOps;
+//import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
+//import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
+//import edu.ufl.cise.cop4020fa23.runtime.PixelOps;
 
 
 class CodeGenTest_starter {
