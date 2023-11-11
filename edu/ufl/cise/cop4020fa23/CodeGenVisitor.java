@@ -16,6 +16,16 @@ public class CodeGenVisitor implements ASTVisitor {
     public static String getPackageName(){
         return packageName;
     }
+
+    private String packageToDirectory() {
+        if (packageName != null) {
+            return packageName.replace('.', '/');
+        }
+        else {
+            return "";
+        }
+    }
+
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
         Object expressionResult = assignmentStatement.getE().visit(this, arg);
@@ -60,7 +70,10 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCCompilerException {
-        return "Conditional Expr";
+        String condition = conditionalExpr.getGuardExpr().visit(this, arg).toString();
+        String trueExpr = conditionalExpr.getTrueExpr().visit(this, arg).toString();
+        String falseExpr = conditionalExpr.getFalseExpr().visit(this, arg).toString();
+        return "(" + condition + " ? " + trueExpr + " : " + falseExpr + ")";
     }
 
     @Override
@@ -70,7 +83,20 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
-        return "Declaration";
+        String declarationType = declaration.getNameDef().getType().toString();
+        String declarationName = declaration.getNameDef().getJavaName();
+
+        javaCode.append("  ").append(declarationType).append(" ").append(declarationName);
+
+        if (declaration.getInitializer() != null) {
+            javaCode.append(" = ");
+            Object initializerResult = declaration.getInitializer().visit(this, arg);
+            javaCode.append(initializerResult);
+        }
+
+        javaCode.append(";\n");
+
+        return javaCode.toString();
     }
 
     @Override
@@ -132,7 +158,7 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitProgram(Program program, Object arg) throws PLCCompilerException {
         // write package name
         if (packageName != null) {
-            javaCode.append("package ").append(packageName).append(";\n\n");
+            javaCode.append("import ").append(packageName).append(".*;\n\n");
         }
 
         javaCode.append("public class ").append(program.getName()).append(" {\n");
@@ -164,7 +190,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
-        return "Unary";
+        String operator = unaryExpr.getOp().toString();
+        String operand = unaryExpr.getExpr().visit(this, arg).toString();
+        return "(" + operator + operand + ")";
     }
 
     @Override
