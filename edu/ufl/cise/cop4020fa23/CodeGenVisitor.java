@@ -130,7 +130,26 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitProgram(Program program, Object arg) throws PLCCompilerException {
-        return "Program";
+        // write package name
+        if (packageName != null) {
+            javaCode.append("package ").append(packageName).append(";\n\n");
+        }
+
+        javaCode.append("public class ").append(program.getName()).append(" {\n");
+
+        // visit params (if any)
+        for (NameDef param : program.getParams()) {
+            param.visit(this, arg);
+        }
+
+        // visit block
+        program.getBlock().visit(this, arg);
+
+        // close class
+        javaCode.append("}\n");
+
+        // return in string
+        return getGeneratedCode();
     }
 
     @Override
