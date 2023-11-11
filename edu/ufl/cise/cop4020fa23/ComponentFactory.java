@@ -25,8 +25,8 @@ public class ComponentFactory {
 			return new ExpressionParser(lexer);
 		}
 
-		public static ASTVisitor makeCodeGenerator(){
-			return new CodeGenVisitor(CodeGenVisitor.getPackageName());
+		public static ASTVisitor makeCodeGenerator(String packageName){
+			return new CodeGenVisitor(packageName);
 		}
 		
 		public static IParser makeExpressionParser(String input) throws LexicalException {

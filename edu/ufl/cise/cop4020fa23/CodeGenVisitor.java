@@ -6,20 +6,16 @@ import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 public class CodeGenVisitor implements ASTVisitor {
 
     private StringBuilder javaCode;
-    private static String packageName;
+    private String packageName;
 
     public CodeGenVisitor(String packageName) {
         this.packageName = packageName;
         this.javaCode = new StringBuilder();
     }
 
-    public static String getPackageName(){
-        return packageName;
-    }
-
-    private String packageToDirectory() {
-        if (packageName != null) {
-            return packageName.replace('.', '/');
+    private String packageToDirectory(String pack) {
+        if (pack != null) {
+            return pack.replace('/', '.');
         }
         else {
             return "";
@@ -158,15 +154,17 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitProgram(Program program, Object arg) throws PLCCompilerException {
         // write package name
         if (packageName != null) {
-            javaCode.append("import ").append(packageName).append(".*;\n\n");
+            javaCode.append("import ").append(packageToDirectory(packageName)).append(".*;\n\n");
         }
 
-        javaCode.append("public class ").append(program.getName()).append(" {\n");
+        System.out.println(packageName);
+        javaCode.append("public class ").append(program.getName());
 
         // visit params (if any)
         for (NameDef param : program.getParams()) {
             param.visit(this, arg);
         }
+        javaCode.append("{\n");
 
         // visit block
         program.getBlock().visit(this, arg);
