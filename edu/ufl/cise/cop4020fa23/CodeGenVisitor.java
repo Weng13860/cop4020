@@ -26,7 +26,7 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
         Object expressionResult = assignmentStatement.getE().visit(this, arg);
 
-        javaCode.append("  ").append(assignmentStatement.getlValue().getName())
+        javaCode.append("  ").append(assignmentStatement.getlValue().getNameDef().getJavaName())
                 .append(" = ").append(expressionResult)
                 .append(";\n");
 
