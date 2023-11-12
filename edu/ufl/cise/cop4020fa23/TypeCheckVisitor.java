@@ -225,6 +225,14 @@ public class TypeCheckVisitor implements ASTVisitor {
         nameDef.visit(this, arg);
         Type nameDefType = nameDef.getType();
 
+        String javaName = generateUniqueJavaName(nameDef.getName());
+
+        // setting java name in nameDef
+        nameDef.setJavaName(javaName);
+
+        // insert the NameDef into the symbol table
+        st.insert(nameDef);
+
         // checking conditions
         if (expr == null || exprType == nameDefType || (exprType == Type.STRING && nameDefType == Type.IMAGE)) {
             // insert to symbol table
@@ -233,6 +241,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         } else {
             throw new TypeCheckException("Type mismatch in declaration: " + declaration);
         }
+
     }
 
     // code from PowerPoint
@@ -307,6 +316,11 @@ public class TypeCheckVisitor implements ASTVisitor {
 
         identExpr.setNameDef(identNameDef);
         identExpr.setType(identNameDef.getType());
+
+        String javaName = generateUniqueJavaName(identExpr.getNameDef().getName());
+
+        // set the generated Java name in the identifier
+        identExpr.getNameDef().setJavaName(javaName);
 
         return identNameDef.getType();
     }
@@ -428,6 +442,7 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
         Type returnType = (Type) returnStatement.getE().visit(this, arg);
+
 
         // making sure it matches root
         if (returnType != root.getType()) {

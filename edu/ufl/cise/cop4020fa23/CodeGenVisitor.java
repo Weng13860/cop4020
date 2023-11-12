@@ -81,7 +81,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
-        String declarationType = declaration.getNameDef().getType().toString();
+        String declarationType = typetostring(declaration.getNameDef().getType());
         String declarationName = declaration.getNameDef().getJavaName();
 
         javaCode.append("  ").append(declarationType).append(" ").append(declarationName);
@@ -119,9 +119,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-
-        return identExpr.getNameDef().getName();
-
+        return identExpr.getNameDef().getJavaName();
     }
 
     @Override
@@ -171,7 +169,8 @@ public class CodeGenVisitor implements ASTVisitor {
             if (!firstParam) {
                 javaCode.append(", ");
             }
-            javaCode.append(param.visit(this, arg));
+            String paramName = param.getJavaName(); // Ensure unique names for parameters
+            javaCode.append(typetostring(param.getType())).append(" ").append(paramName);
             firstParam = false;
         }
         javaCode.append("){\n");
@@ -180,7 +179,7 @@ public class CodeGenVisitor implements ASTVisitor {
         program.getBlock().visit(this, arg);
 
         // close class
-        javaCode.append(";\n\t}\n}\n");
+        javaCode.append("\t}\n}\n");
 
         // return in string
         return getGeneratedCode();
@@ -189,8 +188,8 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
         Object j=returnStatement.getE().visit(this,arg).toString();
-
-        return javaCode.append("\t\treturn "+j);
+        javaCode.append("\t\treturn ").append(j).append(";\n");
+        return javaCode.toString();
 
     }
 
