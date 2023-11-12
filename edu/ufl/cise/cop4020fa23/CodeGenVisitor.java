@@ -52,15 +52,14 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitBlockStatement(StatementBlock statementBlock, Object arg) throws PLCCompilerException {
        String blockaaa= statementBlock.getBlock().visit(this,arg).toString();
+
         return blockaaa;
     }
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
 
-
-
-        return javaCode.append(booleanLitExpr.visit(this,arg).toString());
+        return booleanLitExpr.getText();
     }
 
     @Override
@@ -121,7 +120,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        return identExpr.getNameDef().getJavaName();
+
+        return identExpr.getNameDef().getName();
+
     }
 
     @Override
@@ -136,12 +137,14 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
-        return nameDef.getJavaName();
+
+        String f=typetostring(nameDef.getType());
+        String name=nameDef.getName().toString();
+        return javaCode.append(f+" "+name);
     }
 
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCCompilerException {
-        System.out.println(numLitExpr);
         return numLitExpr.getText();
     }
 
