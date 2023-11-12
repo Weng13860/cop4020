@@ -137,10 +137,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
-
-        String f=typetostring(nameDef.getType());
-        String name=nameDef.getName().toString();
-        return javaCode.append(f+" "+name);
+        String f = typetostring(nameDef.getType());
+        String name = nameDef.getName();
+        return f + " " + name;
     }
 
     @Override
@@ -165,20 +164,24 @@ public class CodeGenVisitor implements ASTVisitor {
             javaCode.append("package ").append(packageToDirectory(packageName)).append(";\n\n");
         }
 
-        System.out.println(packageName);
-        javaCode.append("public class ").append(program.getName()).append("{\n").append("public static ").append(typetostring(program.getType())).append(" apply(");
+        javaCode.append("public class ").append(program.getName()).append("{\n").append("\tpublic static ").append(typetostring(program.getType())).append(" apply(");
 
         // visit params (if any)
+        boolean firstParam = true;
         for (NameDef param : program.getParams()) {
-            param.visit(this, arg);
+            if (!firstParam) {
+                javaCode.append(", ");
+            }
+            javaCode.append(param.visit(this, arg));
+            firstParam = false;
         }
-//        javaCode.append("{\n");
-        javaCode.append("){");
+        javaCode.append("){\n");
+
         // visit block
         program.getBlock().visit(this, arg);
 
         // close class
-        javaCode.append(";}}\n");
+        javaCode.append(";\n\t}\n}\n");
 
         // return in string
         return getGeneratedCode();
@@ -188,7 +191,7 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
         Object j=returnStatement.getE().visit(this,arg).toString();
 
-        return javaCode.append("return "+j);
+        return javaCode.append("\t\treturn "+j);
 
     }
 
