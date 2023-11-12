@@ -51,12 +51,16 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBlockStatement(StatementBlock statementBlock, Object arg) throws PLCCompilerException {
-        return "Block Statement";
+       String blockaaa= statementBlock.getBlock().visit(this,arg).toString();
+        return blockaaa;
     }
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
-        return booleanLitExpr.getText();
+
+
+
+        return javaCode.append(booleanLitExpr.visit(this,arg).toString());
     }
 
     @Override
@@ -137,6 +141,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCCompilerException {
+        System.out.println(numLitExpr);
         return numLitExpr.getText();
     }
 
@@ -158,19 +163,19 @@ public class CodeGenVisitor implements ASTVisitor {
         }
 
         System.out.println(packageName);
-        javaCode.append("public class ").append(program.getName()).append("{\n").append("public static ").append(typetostring(program.getType())).append(" apply(){}");
+        javaCode.append("public class ").append(program.getName()).append("{\n").append("public static ").append(typetostring(program.getType())).append(" apply(");
 
         // visit params (if any)
         for (NameDef param : program.getParams()) {
             param.visit(this, arg);
         }
 //        javaCode.append("{\n");
-
+        javaCode.append("){");
         // visit block
         program.getBlock().visit(this, arg);
 
         // close class
-        javaCode.append("}\n");
+        javaCode.append(";}}\n");
 
         // return in string
         return getGeneratedCode();
@@ -178,7 +183,10 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
-        return "Return";
+        Object j=returnStatement.getE().visit(this,arg).toString();
+
+        return javaCode.append("return "+j);
+
     }
 
     @Override
