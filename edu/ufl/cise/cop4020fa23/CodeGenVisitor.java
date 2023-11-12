@@ -201,7 +201,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
-        String operator = unaryExpr.getOp().toString();
+        String operator = getOperatorString(unaryExpr.getOp());
         String operand = unaryExpr.getExpr().visit(this, arg).toString();
         return "(" + operator + operand + ")";
     }
@@ -223,6 +223,18 @@ public class CodeGenVisitor implements ASTVisitor {
                 return null;
             }
 
+        }
+    }
+
+    // unaryexpr helper
+    private String getOperatorString(Kind operatorKind) {
+        switch (operatorKind) {
+            case MINUS:
+                return "-";
+            case BANG:
+                return "!";
+            default:
+                throw new IllegalArgumentException("Unknown operator: " + operatorKind);
         }
     }
 }
