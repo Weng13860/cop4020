@@ -183,7 +183,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
         // visit block
         program.getBlock().visit(this, arg);
-
+        System.out.println(javaCode);
         // close class
         javaCode.append("\t}\n}\n");
 
