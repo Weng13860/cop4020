@@ -38,11 +38,13 @@ public class CodeGenVisitor implements ASTVisitor {
         String left = binaryExpr.getLeftExpr().visit(this, arg).toString();
         String operator = binaryExpr.getOp().text();
         String right = binaryExpr.getRightExpr().visit(this, arg).toString();
+
         if(binaryExpr.getOpKind()==Kind.EXP){
-            return "((int)Math.round(Math.pow("+left+","+right+"))";
-        }else{
-        return "(" + left + " " + operator + " " + right + ")";
-    }
+            return "((int)Math.round(Math.pow("+left+","+right+")))";
+        }
+        else{
+            return "(" + left + " " + operator + " " + right + ")";
+        }
     }
 
     @Override
@@ -62,7 +64,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
-        return booleanLitExpr.getText();
+        return booleanLitExpr.getText().toLowerCase();
     }
 
     @Override
@@ -199,7 +201,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCCompilerException {
-        return "\"" + stringLitExpr.getText() + "\"";
+        return stringLitExpr.getText();
     }
 
     @Override
