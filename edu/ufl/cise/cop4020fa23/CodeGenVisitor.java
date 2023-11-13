@@ -207,7 +207,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
-        return "Write";
+        String aa=writeStatement.getExpr().visit(this,arg).toString();
+System.out.println(aa);
+        return "ConsoleIO.write("+aa+")";
     }
 
     public String getGeneratedCode() {
