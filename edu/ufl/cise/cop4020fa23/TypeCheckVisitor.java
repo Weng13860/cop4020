@@ -216,16 +216,16 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
 
         NameDef nameDef = declaration.getNameDef();
-
-        // checking for redeclaration in the same scope
-        if (st.lookup(nameDef.getName()) != null && nameDef.getType() == st.lookup(nameDef.getName()).getType()) {
-            throw new TypeCheckException("Variable name '" + nameDef.getName() + "' already exists in the current scope.");
-        }
-
         nameDef.visit(this, arg);
         Type nameDefType = nameDef.getType();
 
         String javaName = generateUniqueJavaName(nameDef.getName());
+        // checking for redeclaration in the same scope
+        if (st.lookup(nameDef.getJavaName()) != null && nameDef.getType() == st.lookup(nameDef.getName()).getType()) {
+            throw new TypeCheckException("Variable name '" + nameDef.getName() + "' already exists in the current scope.");
+        }
+
+
 
         // setting java name in nameDef
         nameDef.setJavaName(javaName);
@@ -627,13 +627,13 @@ public class TypeCheckVisitor implements ASTVisitor {
     }
 
     private String generateUniqueJavaName(String baseName) {
-        int suffix = 1;
-        String javaName = baseName + "$" + suffix;
+
+        String javaName = baseName + "$" + st.currentScopeID;
 
         // Check if the generated JavaName is already in use, incrementing the suffix if necessary
         while (st.lookup(javaName) != null) {
-            suffix++;
-            javaName = baseName + "$" + suffix;
+
+            javaName = baseName + "$" + st.currentScopeID;
         }
 
         return javaName;

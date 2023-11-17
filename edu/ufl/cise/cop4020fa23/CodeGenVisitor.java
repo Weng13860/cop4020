@@ -38,7 +38,13 @@ public class CodeGenVisitor implements ASTVisitor {
         String left = binaryExpr.getLeftExpr().visit(this, arg).toString();
         String operator = binaryExpr.getOp().text();
         String right = binaryExpr.getRightExpr().visit(this, arg).toString();
-        return "(" + left + " " + operator + " " + right + ")";
+
+        if(binaryExpr.getOpKind()==Kind.EXP){
+            return "((int)Math.round(Math.pow("+left+","+right+")))";
+        }
+        else{
+            return "(" + left + " " + operator + " " + right + ")";
+        }
     }
 
     @Override
@@ -58,7 +64,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
-        return booleanLitExpr.getText();
+        return booleanLitExpr.getText().toLowerCase();
     }
 
     @Override
@@ -161,6 +167,7 @@ public class CodeGenVisitor implements ASTVisitor {
             javaCode.append("package ").append(packageToDirectory(packageName)).append(";\n\n");
         }
 
+        javaCode.append("import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;\n");
         javaCode.append("public class ").append(program.getName()).append("{\n").append("\tpublic static ").append(typetostring(program.getType())).append(" apply(");
 
         // visit params (if any)
@@ -177,6 +184,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
         // visit block
         program.getBlock().visit(this, arg);
+        System.out.println(javaCode);
 
         // close class
         javaCode.append("\t}\n}\n");
@@ -195,7 +203,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCCompilerException {
-        return "\"" + stringLitExpr.getText() + "\"";
+        return stringLitExpr.getText();
     }
 
     @Override
@@ -207,7 +215,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
-        return "Write";
+        String aa = writeStatement.getExpr().visit(this, arg).toString();
+        javaCode.append("\tConsoleIO.write(").append(aa).append(");\n");
+        return javaCode.toString();
     }
 
     public String getGeneratedCode() {
