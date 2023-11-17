@@ -82,16 +82,20 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
-        return "Const Expr";
+        String aa=constExpr.getName();
+        if(aa=="Z"){return 255;}
+        else {
+            return "0x"+"Integer.toHexString(Color."+aa+".getRGB())";
+        }
     }
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
         String declarationType = typetostring(declaration.getNameDef().getType());
         String declarationName = declaration.getNameDef().getJavaName();
+        if(declarationType!= "IMAGE"){
 
         javaCode.append("  ").append(declarationType).append(" ").append(declarationName);
-
         if (declaration.getInitializer() != null) {
             javaCode.append(" = ");
             Object initializerResult = declaration.getInitializer().visit(this, arg);
@@ -100,12 +104,25 @@ public class CodeGenVisitor implements ASTVisitor {
 
         javaCode.append(";\n");
 
-        return javaCode.toString();
+        return javaCode.toString();}
+        else {
+            String aaaaa=declaration.getNameDef().getDimension().visit(this,arg).toString();
+
+            javaCode.append("final BufferedImage").append(declarationName).append("=").append("ImageOps.makeImage(").append(aaaaa).append(")");
+            if(declaration.getInitializer()!=null){
+               Expr x=declaration.getInitializer();
+               if(x.getType()!=Type.STRING){
+
+               }
+
+            }
+
+        }
     }
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
-        return "Dimension";
+        return dimension.getWidth().toString()+","+dimension.getHeight().toString();
     }
 
     @Override
@@ -115,7 +132,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCCompilerException {
-        return "Expanded Pixel";
+        return "PixelOps.pack("+expandedPixelExpr.getRed()+","+expandedPixelExpr.getGreen()+","+expandedPixelExpr.getBlue()+")";
     }
 
     @Override
@@ -135,12 +152,16 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
+        String aa=lValue.getChannelSelector().visit(this,arg).toString();
+        String bb=lValue.getPixelSelector().visit(this,arg).toString();
+        String cc=lValue.getNameDef().getJavaName().toString();
         return "L Value";
     }
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
         String f = typetostring(nameDef.getType());
+        Object aaa=nameDef.getDimension().visit(this,arg);
         String name = nameDef.getName();
         return f + " " + name;
     }
@@ -152,12 +173,30 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
-        return "Pixel Selector";
+        String x=pixelSelector.xExpr().toString();
+        String y=pixelSelector.yExpr().toString();
+        return javaCode.append(x).append(",").append(y);
     }
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-        return "Postfix";
+        if(postfixExpr.getType()==Type.PIXEL){
+            String aa=postfixExpr.channel().visit(this,arg).toString();
+             javaCode.append(aa);
+
+        }else if(postfixExpr.getType()==Type.IMAGE){
+           String  aaa= postfixExpr.channel().visit(this,arg).toString();
+           String bbb=postfixExpr.pixel().visit(this,arg).toString();
+            if(aaa == null&&bbb!=null){
+                 javaCode.append("ImageOps.getRGB( ").append(postfixExpr.primary().toString()).append(",").append(bbb).append(")");
+            }
+            else if(aaa!=null&&bbb!=null){javaCode.append(aaa).append("(ImageOps.getRGB(").append(postfixExpr.primary().toString()).append(",").append(bbb).append("))");
+            }
+            else if(aaa!=null&&bbb!=null){
+                javaCode.append("ImageOps.extractRed( ").append(postfixExpr.primary().toString()).append(")");
+            }
+        }
+        return javaCode;
     }
 
     @Override
@@ -167,7 +206,7 @@ public class CodeGenVisitor implements ASTVisitor {
             javaCode.append("package ").append(packageToDirectory(packageName)).append(";\n\n");
         }
 
-        javaCode.append("import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;\n");
+        javaCode.append("import edu.ufl.cise.cop4020fa23.runtime.*;\n");
         javaCode.append("public class ").append(program.getName()).append("{\n").append("\tpublic static ").append(typetostring(program.getType())).append(" apply(");
 
         // visit params (if any)
@@ -210,7 +249,12 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
         String operator = getOperatorString(unaryExpr.getOp());
         String operand = unaryExpr.getExpr().visit(this, arg).toString();
-        return "(" + operator + operand + ")";
+        if(operator=="RES_width"){
+            return "("+ operand + ".getWidth())";
+        }
+        if(operator=="RES_height"){
+           return  "("+ operand + ".getHeight())";
+        }
     }
 
     @Override
@@ -226,6 +270,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     public String typetostring(Type type){
         switch (type){
+            case IMAGE,PIXEL->{
+                return "BufferedImage";
+            }
             case INT,BOOLEAN,VOID->{return type.toString().toLowerCase();}
             case STRING -> {return "String";}
             default -> {
