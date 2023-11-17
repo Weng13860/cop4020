@@ -167,6 +167,7 @@ public class CodeGenVisitor implements ASTVisitor {
             javaCode.append("package ").append(packageToDirectory(packageName)).append(";\n\n");
         }
 
+        javaCode.append("import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;\n");
         javaCode.append("public class ").append(program.getName()).append("{\n").append("\tpublic static ").append(typetostring(program.getType())).append(" apply(");
 
         // visit params (if any)
@@ -184,6 +185,7 @@ public class CodeGenVisitor implements ASTVisitor {
         // visit block
         program.getBlock().visit(this, arg);
         System.out.println(javaCode);
+
         // close class
         javaCode.append("\t}\n}\n");
 
@@ -213,9 +215,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
-        String aa=writeStatement.getExpr().visit(this,arg).toString();
-        System.out.println(aa);
-        return "ConsoleIO.write("+aa+")";
+        String aa = writeStatement.getExpr().visit(this, arg).toString();
+        javaCode.append("\tConsoleIO.write(").append(aa).append(");\n");
+        return javaCode.toString();
     }
 
     public String getGeneratedCode() {
