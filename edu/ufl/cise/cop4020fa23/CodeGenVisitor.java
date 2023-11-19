@@ -1,6 +1,7 @@
 package edu.ufl.cise.cop4020fa23;
 
 import edu.ufl.cise.cop4020fa23.ast.*;
+import edu.ufl.cise.cop4020fa23.exceptions.CodeGenException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 
 public class CodeGenVisitor implements ASTVisitor {
@@ -25,6 +26,13 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
         Object expressionResult = assignmentStatement.getE().visit(this, arg);
+        Type a=assignmentStatement.getE().getType();
+        if(a==Type.IMAGE){
+           javaCode.append( "ImageOps.copyInto(").append(assignmentStatement.getlValue().getNameDef().getJavaName()).append("=").append(expressionResult).append(";\n");
+        }
+        else if(a==Type.PIXEL){
+            javaCode.append("ImageOps.setAllPixels(");//Continue here, need add paras
+        }
 
         javaCode.append("  ").append(assignmentStatement.getlValue().getNameDef().getJavaName())
                 .append(" = ").append(expressionResult)
@@ -93,26 +101,34 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
         String declarationType = typetostring(declaration.getNameDef().getType());
         String declarationName = declaration.getNameDef().getJavaName();
+        String aaa= declaration.getInitializer().toString();
         if(declarationType!= "IMAGE"){
 
         javaCode.append("  ").append(declarationType).append(" ").append(declarationName);
-        if (declaration.getInitializer() != null) {
+        if (aaa!= null) {
             javaCode.append(" = ");
             Object initializerResult = declaration.getInitializer().visit(this, arg);
             javaCode.append(initializerResult);
         }
-
         javaCode.append(";\n");
-
         return javaCode.toString();}
         else {
-            String aaaaa=declaration.getNameDef().getDimension().visit(this,arg).toString();
+            if(aaa==null){
+                String aaaaa=declaration.getNameDef().getDimension().visit(this,arg).toString();
+                if(aaaaa!=null){
+                    javaCode.append("final BufferedImage").append(aaaaa).append(declarationName).append("=").append("ImageOps.makeImage(").append(aaaaa).append(")");}
+                else {throw new CodeGenException("no dim from decl1");}
+            }
+            else{
+                String aaa1=declaration.getNameDef().getDimension().visit(this,arg).toString();
+                if(aaa1!=null){
 
-            javaCode.append("final BufferedImage").append(declarationName).append("=").append("ImageOps.makeImage(").append(aaaaa).append(")");
+                }
+            }
             if(declaration.getInitializer()!=null){
                Expr x=declaration.getInitializer();
-               if(x.getType()!=Type.STRING){
-
+               if(x.getType()==Type.STRING){
+                    javaCode.append("=").append(x.toString());
                }
 
             }
