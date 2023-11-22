@@ -90,10 +90,12 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
-        String aa=constExpr.getName();
-        if(aa=="Z"){return 255;}
+        String expressionName = constExpr.getName();
+        if(expressionName.equals("Z")){
+            return 255;
+        }
         else {
-            return "0x"+"Integer.toHexString(Color."+aa+".getRGB())";
+            return "Color." + expressionName + ".getRGB()";
         }
     }
 
@@ -101,27 +103,28 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
         String declarationType = typetostring(declaration.getNameDef().getType());
         String declarationName = declaration.getNameDef().getJavaName();
-        String aaa= declaration.getInitializer().toString();
-        if(declarationType!= "IMAGE"){
+        String initializerString = declaration.getInitializer().toString();
 
-        javaCode.append("  ").append(declarationType).append(" ").append(declarationName);
-        if (aaa!= null) {
-            javaCode.append(" = ");
-            Object initializerResult = declaration.getInitializer().visit(this, arg);
-            javaCode.append(initializerResult);
+        if(declarationType != "IMAGE"){
+            javaCode.append("  ").append(declarationType).append(" ").append(declarationName);
+            if (initializerString != null) {
+                javaCode.append(" = ");
+                Object initializerResult = declaration.getInitializer().visit(this, arg);
+                javaCode.append(initializerResult);
+            }
+            javaCode.append(";\n");
+            return javaCode.toString();
         }
-        javaCode.append(";\n");
-        return javaCode.toString();}
         else {
-            if(aaa==null){
-                String aaaaa=declaration.getNameDef().getDimension().visit(this,arg).toString();
-                if(aaaaa!=null){
-                    javaCode.append("final BufferedImage").append(aaaaa).append(declarationName).append("=").append("ImageOps.makeImage(").append(aaaaa).append(")");}
+            if(initializerString == null){
+                String dimensionString = declaration.getNameDef().getDimension().visit(this,arg).toString();
+                if(dimensionString!=null){
+                    javaCode.append("final BufferedImage").append(dimensionString).append(declarationName).append("=").append("ImageOps.makeImage(").append(dimensionString).append(")");}
                 else {throw new CodeGenException("no dim from decl1");}
             }
             else{
-                String aaa1=declaration.getNameDef().getDimension().visit(this,arg).toString();
-                if(aaa1!=null){
+                String dimensionString=declaration.getNameDef().getDimension().visit(this,arg).toString();
+                if(dimensionString != null){
 
                 }
             }
@@ -134,6 +137,7 @@ public class CodeGenVisitor implements ASTVisitor {
             }
 
         }
+        return new CodeGenException("decl error");
     }
 
     @Override
@@ -148,7 +152,11 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCCompilerException {
-        return "PixelOps.pack("+expandedPixelExpr.getRed()+","+expandedPixelExpr.getGreen()+","+expandedPixelExpr.getBlue()+")";
+        String redExpr = expandedPixelExpr.getRed().visit(this, arg).toString();
+        String greenExpr = expandedPixelExpr.getGreen().visit(this, arg).toString();
+        String blueExpr = expandedPixelExpr.getBlue().visit(this, arg).toString();
+
+        return "PixelOps.pack(" + redExpr + ", " + greenExpr + ", " + blueExpr + ")";
     }
 
     @Override
@@ -197,18 +205,18 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
         if(postfixExpr.getType()==Type.PIXEL){
-            String aa=postfixExpr.channel().visit(this,arg).toString();
-             javaCode.append(aa);
+            String channelExpression = postfixExpr.channel().visit(this,arg).toString();
+             javaCode.append(channelExpression);
 
         }else if(postfixExpr.getType()==Type.IMAGE){
-           String  aaa= postfixExpr.channel().visit(this,arg).toString();
-           String bbb=postfixExpr.pixel().visit(this,arg).toString();
-            if(aaa == null&&bbb!=null){
-                 javaCode.append("ImageOps.getRGB( ").append(postfixExpr.primary().toString()).append(",").append(bbb).append(")");
+           String channelExpression = postfixExpr.channel().visit(this,arg).toString();
+           String pixelExpression = postfixExpr.pixel().visit(this,arg).toString();
+            if(channelExpression == null && pixelExpression != null){
+                 javaCode.append("ImageOps.getRGB( ").append(postfixExpr.primary().toString()).append(",").append(pixelExpression).append(")");
             }
-            else if(aaa!=null&&bbb!=null){javaCode.append(aaa).append("(ImageOps.getRGB(").append(postfixExpr.primary().toString()).append(",").append(bbb).append("))");
+            else if(channelExpression!=null && pixelExpression != null){javaCode.append(channelExpression).append("(ImageOps.getRGB(").append(postfixExpr.primary().toString()).append(",").append(pixelExpression).append("))");
             }
-            else if(aaa!=null&&bbb!=null){
+            else if(channelExpression!=null&&pixelExpression!=null){
                 javaCode.append("ImageOps.extractRed( ").append(postfixExpr.primary().toString()).append(")");
             }
         }
@@ -223,7 +231,10 @@ public class CodeGenVisitor implements ASTVisitor {
         }
 
         javaCode.append("import edu.ufl.cise.cop4020fa23.runtime.*;\n");
-        javaCode.append("public class ").append(program.getName()).append("{\n").append("\tpublic static ").append(typetostring(program.getType())).append(" apply(");
+        javaCode.append("import java.awt.image.BufferedImage;\n");
+        javaCode.append("import javax.imageio.ImageIO;\n");
+        javaCode.append("import java.awt.Color;\n");
+        javaCode.append("\npublic class ").append(program.getName()).append("{\n").append("\tpublic static ").append(typetostring(program.getType())).append(" apply(");
 
         // visit params (if any)
         boolean firstParam = true;
@@ -271,6 +282,7 @@ public class CodeGenVisitor implements ASTVisitor {
         if(operator=="RES_height"){
            return  "("+ operand + ".getHeight())";
         }
+        return new CodeGenException("unary error");
     }
 
     @Override
@@ -286,11 +298,18 @@ public class CodeGenVisitor implements ASTVisitor {
 
     public String typetostring(Type type){
         switch (type){
-            case IMAGE,PIXEL->{
+            case IMAGE->{
                 return "BufferedImage";
             }
-            case INT,BOOLEAN,VOID->{return type.toString().toLowerCase();}
-            case STRING -> {return "String";}
+            case PIXEL->{
+                return "int";
+            }
+            case INT,BOOLEAN,VOID->{
+                return type.toString().toLowerCase();
+            }
+            case STRING -> {
+                return "String";
+            }
             default -> {
                 return null;
             }
