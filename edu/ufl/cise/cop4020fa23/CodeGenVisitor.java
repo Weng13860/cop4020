@@ -3,6 +3,7 @@ package edu.ufl.cise.cop4020fa23;
 import edu.ufl.cise.cop4020fa23.ast.*;
 import edu.ufl.cise.cop4020fa23.exceptions.CodeGenException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
+import java.awt.Color;
 
 public class CodeGenVisitor implements ASTVisitor {
 
@@ -31,7 +32,10 @@ public class CodeGenVisitor implements ASTVisitor {
            javaCode.append( "ImageOps.copyInto(").append(assignmentStatement.getlValue().getNameDef().getJavaName()).append("=").append(expressionResult).append(";\n");
         }
         else if(a==Type.PIXEL){
-            javaCode.append("ImageOps.setAllPixels(");//Continue here, need add paras
+            javaCode.append("ImageOps.setAllPixels(").append(assignmentStatement.getlValue().getNameDef().getJavaName())
+                    .append(", ")
+                    .append(expressionResult)
+                    .append(");\n");
         }
 
         javaCode.append("  ").append(assignmentStatement.getlValue().getNameDef().getJavaName())
@@ -48,7 +52,10 @@ public class CodeGenVisitor implements ASTVisitor {
         String right = binaryExpr.getRightExpr().visit(this, arg).toString();
 
         if(binaryExpr.getOpKind()==Kind.EXP){
-            return "((int)Math.round(Math.pow("+left+","+right+")))";
+            return "((int)Math.round(Math.pow(" + left + "," + right + ")))";
+        }
+        else if(binaryExpr.getLeftExpr().getType() == Type.PIXEL){
+            return "ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS," + left+  "," + right + ")";
         }
         else{
             return "(" + left + " " + operator + " " + right + ")";
@@ -91,12 +98,7 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
         String expressionName = constExpr.getName();
-        if(expressionName.equals("Z")){
-            return 255;
-        }
-        else {
-            return "Color." + expressionName + ".getRGB()";
-        }
+        return getRGB(expressionName);
     }
 
     @Override
@@ -328,4 +330,53 @@ public class CodeGenVisitor implements ASTVisitor {
                 throw new IllegalArgumentException("Unknown operator: " + operatorKind);
         }
     }
+
+    private String getRGB(String color) {
+        switch (color) {
+            case "BLUE" -> {
+                return "0x" + Integer.toHexString(Color.BLUE.getRGB());
+            }
+            case "GREEN" -> {
+                return "0x" + Integer.toHexString(Color.GREEN.getRGB());
+            }
+            case "BLACK" -> {
+                return "0x" + Integer.toHexString(Color.BLACK.getRGB());
+            }
+            case "CYAN" -> {
+                return "0x" + Integer.toHexString(Color.CYAN.getRGB());
+            }
+            case "DARK_GRAY" -> {
+                return "0x" + Integer.toHexString(Color.DARK_GRAY.getRGB());
+            }
+            case "GRAY" -> {
+                return "0x" + Integer.toHexString(Color.GRAY.getRGB());
+            }
+            case "LIGHT_GRAY" -> {
+                return "0x" + Integer.toHexString(Color.LIGHT_GRAY.getRGB());
+            }
+            case "MAGENTA" -> {
+                return "0x" + Integer.toHexString(Color.MAGENTA.getRGB());
+            }
+            case "ORANGE" -> {
+                return "0x" + Integer.toHexString(Color.ORANGE.getRGB());
+            }
+            case "PINK" -> {
+                return "0x" + Integer.toHexString(Color.PINK.getRGB());
+            }
+            case "RED" -> {
+                return "0x" + Integer.toHexString(Color.RED.getRGB());
+            }
+            case "WHITE" -> {
+                return "0x" + Integer.toHexString(Color.WHITE.getRGB());
+            }
+            case "YELLOW" -> {
+                return "0x" + Integer.toHexString(Color.YELLOW.getRGB());
+            }
+            case "Z" -> {
+                return "255";
+            }
+        }
+        return null;
+    }
+
 }
