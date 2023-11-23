@@ -83,6 +83,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
+        System.out.println("aa");
         String left = binaryExpr.getLeftExpr().visit(this, arg).toString();
         String operator = binaryExpr.getOp().text();
         String right = binaryExpr.getRightExpr().visit(this, arg).toString();
@@ -139,11 +140,12 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
+
         String declarationType = typetostring(declaration.getNameDef().getType());
         String declarationName = declaration.getNameDef().getJavaName();
         Expr initializerString = declaration.getInitializer();
 
-        if(declarationType != "IMAGE"){
+        if(declarationType == "BufferedImage"){
             javaCode.append("\t\t").append(declarationType).append(" ").append(declarationName);
             if (initializerString != null && initializerString.getType() == Type.STRING) {
                 Object initializerResult = declaration.getInitializer().visit(this, arg);
@@ -170,10 +172,14 @@ public class CodeGenVisitor implements ASTVisitor {
                 else {throw new CodeGenException("no dim from decl1");}
             }
             else{
-                String dimensionString=declaration.getNameDef().getDimension().visit(this,arg).toString();
-                if(dimensionString != null){
+                javaCode.append(declarationType+" ")
+                        .append(declarationName)
+                        .append("=")
+                        .append(declaration.getInitializer().visit(this,arg).toString())
+                        .append(";");
 
-                }
+                return javaCode;
+
             }
             if(declaration.getInitializer()!=null){
                Expr x=declaration.getInitializer();
@@ -293,7 +299,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
         javaCode.append("import edu.ufl.cise.cop4020fa23.runtime.*;\n");
         javaCode.append("import java.awt.image.BufferedImage;\n");
-        javaCode.append("import javax.imageio.ImageIO;\n");
+        //javaCode.append("import javax.imageio.ImageIO;\n");
         javaCode.append("import java.awt.Color;\n");
         javaCode.append("\npublic class ").append(program.getName()).append("{\n").append("\tpublic static ").append(typetostring(program.getType())).append(" apply(");
 
