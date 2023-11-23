@@ -250,13 +250,18 @@ class CodeGenTest_Hw5_starter {
 	}
 
 	/*
-	 * package edu.ufl.cise.cop4020fa23; import
-	 * edu.ufl.cise.cop4020fa23.runtime.PixelOps; import
-	 * edu.ufl.cise.cop4020fa23.runtime.ConsoleIO; public class f{ public static int
-	 * apply(){ int pred$2; pred$2=0xffff0000; ConsoleIO.write("initial value");
-	 * ConsoleIO.writePixel(pred$2); pred$2=PixelOps.setGreen(pred$2,255);
+	 * package edu.ufl.cise.cop4020fa23;
+	 * import edu.ufl.cise.cop4020fa23.runtime.PixelOps;
+	 * import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;
+	 * public class f{ public static int apply(){
+	 * int pred$2;
+	 * pred$2=0xffff0000;
+	 * ConsoleIO.write("initial value");
+	 * ConsoleIO.writePixel(pred$2);
+	 * pred$2=PixelOps.setGreen(pred$2,255);
 	 * ConsoleIO.write("after assignment to green channel");
-	 * ConsoleIO.writePixel(pred$2); return pred$2; } }
+	 * ConsoleIO.writePixel(pred$2);
+	 * return pred$2; } }
 	 * 
 	 * Expected output: initial value ffff0000 after assignment to green channel
 	 * ffffff00
@@ -283,11 +288,13 @@ class CodeGenTest_Hw5_starter {
 
 	/**
 	 * 
-	 * package edu.ufl.cise.cop4020fa23; import java.awt.image.BufferedImage; import
-	 * edu.ufl.cise.cop4020fa23.runtime.ImageOps; import
-	 * edu.ufl.cise.cop4020fa23.runtime.FileURLIO; public class f{ public static
-	 * BufferedImage apply(String url$1){ BufferedImage
-	 * i$2=FileURLIO.readImage(url$1); return i$2; } }
+	 * package edu.ufl.cise.cop4020fa23;
+	 * import java.awt.image.BufferedImage;
+	 * import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
+	 * import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
+	 * public class f{ public static BufferedImage apply(String url$1){
+	 * BufferedImage i$2=FileURLIO.readImage(url$1);
+	 * return i$2; } }
 	 */
 	@Test
 	void hw5_10() throws Exception {
