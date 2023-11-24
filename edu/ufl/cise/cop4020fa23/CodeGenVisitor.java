@@ -166,10 +166,11 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         else {
             if(initializerString == null){
-                String dimensionString = declaration.getNameDef().getDimension().visit(this,arg).toString();
-                if(dimensionString!=null){
-                    javaCode.append("final BufferedImage").append(dimensionString).append(declarationName).append("=").append("ImageOps.makeImage(").append(dimensionString).append(")");}
-                else {throw new CodeGenException("no dim from decl1");}
+               // String dimensionString = declaration.getNameDef().getDimension().visit(this,arg).toString();
+                //if(dimensionString!=null){
+                  //  javaCode.append("final BufferedImage").append(dimensionString).append(declarationName).append("=").append("ImageOps.makeImage(").append(dimensionString).append(")");}
+             //   else {throw new CodeGenException("no dim from decl1");}
+                javaCode.append("int "+declarationName).append(";");
             }
             else{
                 javaCode.append(declarationType+" ")
