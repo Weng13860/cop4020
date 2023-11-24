@@ -144,21 +144,30 @@ public class CodeGenVisitor implements ASTVisitor {
         String declarationType = typetostring(declaration.getNameDef().getType());
         String declarationName = declaration.getNameDef().getJavaName();
         Expr initializerString = declaration.getInitializer();
-
+        Dimension dim=declaration.getNameDef().getDimension();
         if(declarationType == "BufferedImage"){
             javaCode.append("\t\t").append(declarationType).append(" ").append(declarationName);
+            Object initializerResult = declaration.getInitializer().visit(this, arg);
             if (initializerString != null && initializerString.getType() == Type.STRING) {
-                Object initializerResult = declaration.getInitializer().visit(this, arg);
+
                 javaCode.append(" = ");
                 javaCode.append("FileURLIO.readImage(")
                         .append(initializerResult)
                         .append(")");
             }
-            else if (initializerString != null && initializerString.getType() == Type.IMAGE) {
-                Object initializerResult = declaration.getInitializer().visit(this, arg);
+           /* else if (initializerString != null && initializerString.getType() == Type.IMAGE) {
+
                 javaCode.append(" = ");
                 javaCode.append("ImageOps.cloneImage(")
                         .append(initializerResult)
+                        .append(")");
+            }*/
+            else if(dim!=null&&initializerString.getType() == Type.IMAGE){
+               String aa=dim.getWidth().firstToken.text();
+                String bb=dim.getHeight().firstToken.text();
+                javaCode.append(" = ")
+                        .append("ImageOps.copyAndResize(")
+                        .append(initializerResult+","+aa+","+bb)
                         .append(")");
             }
             javaCode.append(";\n");

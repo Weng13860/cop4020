@@ -295,6 +295,7 @@ class CodeGenTest_Hw5_starter {
 	 * public class f{ public static BufferedImage apply(String url$1){
 	 * BufferedImage i$2=FileURLIO.readImage(url$1);
 	 * return i$2; } }
+	 *
 	 */
 	@Test
 	void hw5_10() throws Exception {
