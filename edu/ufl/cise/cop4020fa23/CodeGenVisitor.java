@@ -41,7 +41,7 @@ public class CodeGenVisitor implements ASTVisitor {
                     .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
 
                     .append("aa");
-
+//continue here run and see what we need to do
         }
         else if (assignmentExpr == Type.IMAGE) {
             javaCode.append("ImageOps.copyInto(")
