@@ -4,6 +4,7 @@ import edu.ufl.cise.cop4020fa23.ast.*;
 import edu.ufl.cise.cop4020fa23.exceptions.CodeGenException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import java.awt.Color;
+import java.util.List;
 
 public class CodeGenVisitor implements ASTVisitor {
 
@@ -83,7 +84,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
-        System.out.println("aa");
+
         String left = binaryExpr.getLeftExpr().visit(this, arg).toString();
         String operator = binaryExpr.getOp().text();
         String right = binaryExpr.getRightExpr().visit(this, arg).toString();
@@ -145,24 +146,25 @@ public class CodeGenVisitor implements ASTVisitor {
         String declarationName = declaration.getNameDef().getJavaName();
         Expr initializerString = declaration.getInitializer();
         Dimension dim=declaration.getNameDef().getDimension();
-        if(declarationType == "BufferedImage"){
+        if(declarationType == "BufferedImage"&&initializerString!=null){
             javaCode.append("\t\t").append(declarationType).append(" ").append(declarationName);
-            Object initializerResult = declaration.getInitializer().visit(this, arg);
-            if (initializerString != null && initializerString.getType() == Type.STRING) {
 
+            if (initializerString != null && initializerString.getType() == Type.STRING) {
+                Object initializerResult = declaration.getInitializer().visit(this, arg);
                 javaCode.append(" = ");
                 javaCode.append("FileURLIO.readImage(")
                         .append(initializerResult)
                         .append(")");
             }
-           /* else if (initializerString != null && initializerString.getType() == Type.IMAGE) {
-
+           else if (initializerString != null && initializerString.getType() == Type.IMAGE&&dim==null) {
+                Object initializerResult = declaration.getInitializer().visit(this, arg);
                 javaCode.append(" = ");
                 javaCode.append("ImageOps.cloneImage(")
                         .append(initializerResult)
                         .append(")");
-            }*/
+            }
             else if(dim!=null&&initializerString.getType() == Type.IMAGE){
+                Object initializerResult = declaration.getInitializer().visit(this, arg);
                String aa=dim.getWidth().firstToken.text();
                 String bb=dim.getHeight().firstToken.text();
                 javaCode.append(" = ")
@@ -173,15 +175,20 @@ public class CodeGenVisitor implements ASTVisitor {
             javaCode.append(";\n");
             return javaCode.toString();
         }
-        else {
-            if(initializerString == null){
-               // String dimensionString = declaration.getNameDef().getDimension().visit(this,arg).toString();
-                //if(dimensionString!=null){
-                  //  javaCode.append("final BufferedImage").append(dimensionString).append(declarationName).append("=").append("ImageOps.makeImage(").append(dimensionString).append(")");}
-             //   else {throw new CodeGenException("no dim from decl1");}
+        else if(initializerString == null){
+               Dimension dimensionString = declaration.getNameDef().getDimension();
+
+
+               String a9=declaration.getNameDef().getJavaName();
+                if(dimensionString!=null){
+                    Object a=declaration.getNameDef().getDimension().visit(this,arg);
+
+
+                   javaCode.append("final BufferedImage ").append(a9).append("=").append("ImageOps.makeImage(").append(a).append(");");}
+               else {throw new CodeGenException("no dim from decl1");}
                 javaCode.append("int "+declarationName).append(";");
             }
-            else{
+           /* else{
                 javaCode.append(declarationType+" ")
                         .append(declarationName)
                         .append("=")
@@ -197,15 +204,18 @@ public class CodeGenVisitor implements ASTVisitor {
                     javaCode.append("=").append(x.toString());
                }
 
-            }
+            }*/
 
-        }
+
         return new CodeGenException("decl error");
     }
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
-        return dimension.getWidth().toString()+","+dimension.getHeight().toString();
+
+        String aa=dimension.getWidth().visit(this,arg).toString();
+        String aaa=dimension.getHeight().visit(this,arg).toString();
+        return aa+","+aaa;
     }
 
     @Override
@@ -224,7 +234,22 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitGuardedBlock(GuardedBlock guardedBlock, Object arg) throws PLCCompilerException {
-        return "Guarded Block";
+        Object aa= guardedBlock.getGuard().visit(this,arg);
+        Object bb=guardedBlock.getBlock().visit(this,arg);
+        javaCode.append("if(")
+                .append(aa)
+                .append(")")
+                .append("{")
+                .append(bb)
+                .append("}");
+        javaCode.append("else if(")
+                .append(aa)
+                .append(")")
+                .append("{")
+                .append(bb)
+                .append("}");
+
+        return javaCode.toString();
     }
 
     @Override
@@ -234,6 +259,10 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
+        Object aa=ifStatement.visit(this,arg).toString();
+
+
+
         return "If";
     }
 
