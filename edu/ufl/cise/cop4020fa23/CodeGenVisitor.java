@@ -27,11 +27,23 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
+
         Object expressionResult = assignmentStatement.getE().visit(this, arg);
+
         Type assignmentExpr = assignmentStatement.getE().getType();
         LValue lValue = assignmentStatement.getlValue();
+        Type lvt=lValue.getType();
+        Type a=assignmentStatement.getlValue().getNameDef().getType();
 
-        if (assignmentExpr == Type.IMAGE) {
+        if(assignmentExpr==Type.PIXEL&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
+
+            javaCode.append("for(")
+                    .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
+
+                    .append("aa");
+
+        }
+        else if (assignmentExpr == Type.IMAGE) {
             javaCode.append("ImageOps.copyInto(")
                     .append(lValue.getNameDef().getJavaName())
                     .append("=")
@@ -186,7 +198,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
                    javaCode.append("final BufferedImage ").append(a9).append("=").append("ImageOps.makeImage(").append(a).append(");");}
                else {throw new CodeGenException("no dim from decl1");}
-                javaCode.append("int "+declarationName).append(";");
+              //  javaCode.append("int "+declarationName).append(";");
             }
            /* else{
                 javaCode.append(declarationType+" ")
@@ -254,6 +266,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
+
         return identExpr.getNameDef().getJavaName();
     }
 
@@ -287,7 +300,6 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
         String f = typetostring(nameDef.getType());
-        Object aaa=nameDef.getDimension().visit(this,arg);
         String name = nameDef.getName();
         return f + " " + name;
     }
@@ -299,8 +311,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
-        String x=pixelSelector.xExpr().toString();
-        String y=pixelSelector.yExpr().toString();
+
+        String x=pixelSelector.xExpr().visit(this,arg).toString();
+        String y=pixelSelector.yExpr().visit(this,arg).toString();
         return javaCode.append(x).append(",").append(y);
     }
 
