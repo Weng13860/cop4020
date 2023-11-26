@@ -310,7 +310,7 @@ class CodeGenTest_Hw5_starter {
 		BufferedImage result = (BufferedImage) PLCLangExec.runCode(packageName, source, url);
 		BufferedImage expectedImage = FileURLIO.readImage(url);
 		compareImages(expectedImage, result);
-		show(result);
+		//show(result);
 	}
 
 	/**
@@ -336,7 +336,7 @@ class CodeGenTest_Hw5_starter {
 		BufferedImage result = (BufferedImage) PLCLangExec.runCode(packageName, source, url);
 		BufferedImage expected = FileURLIO.readImage(url);
 		compareImages(expected, result);
-		show(result);
+		//show(result);
 	}
 
 	/**
@@ -361,7 +361,7 @@ class CodeGenTest_Hw5_starter {
 		BufferedImage result = (BufferedImage) PLCLangExec.runCode(packageName, source, url);
 		BufferedImage expected = FileURLIO.readImage(url, 50, 100);
 		compareImages(expected, result);
-		show(result);
+		//show(result);
 	}
 
 	/**
@@ -486,7 +486,7 @@ class CodeGenTest_Hw5_starter {
 				   :>
 				   """;
 		BufferedImage result = (BufferedImage) PLCLangExec.runCode(packageName, source, 200, 300);
-		show(result);
+		//show(result);
 		BufferedImage expected = ImageOps.makeImage(200, 300);
 		for (int y = 0; y < 300; y++)
 			for (int x = 0; x < 200; x++)
@@ -513,7 +513,7 @@ class CodeGenTest_Hw5_starter {
 		for (int y = 0; y < 500; y++)
 			for (int x = 0; x < 600; x++)
 				expected.setRGB(x, y, image0.getRGB(y, x));
-		show(result);
+		//show(result);
 		compareImages(expected, result);
 	}
 
@@ -557,7 +557,7 @@ class CodeGenTest_Hw5_starter {
 
 		BufferedImage expected = ImageOps.binaryImageImageOp(ImageOps.OP.PLUS, image0, image1);
 		compareImages(expected, result);
-		show(result);
+		//show(result);
 	}
 
 	/**
@@ -594,7 +594,7 @@ class CodeGenTest_Hw5_starter {
 		int w = 200;
 		int h = 300;
 		BufferedImage image = (BufferedImage) PLCLangExec.runCode(packageName, source, url, w, h);
-		show(image);
+		//show(image);
 		BufferedImage redImage = ImageOps.makeImage(w, h);
 		ImageOps.setAllPixels(redImage, Color.red.getRGB());
 		BufferedImage im0 = FileURLIO.readImage(url, w, h);
@@ -630,7 +630,7 @@ class CodeGenTest_Hw5_starter {
 		int w = 512;
 		int h = 512;
 		BufferedImage image = (BufferedImage) PLCLangExec.runCode(packageName, source, w, h);
-		show(image);
+		//show(image);
 		BufferedImage expected = ImageOps.makeImage(w, h);
 		for (int y = 0; y < h; y++)
 			for (int x = 0; x < w; x++)
@@ -662,7 +662,7 @@ class CodeGenTest_Hw5_starter {
 		int factor = 2;
 		String url = testURL;
 		BufferedImage image = (BufferedImage) PLCLangExec.runCode(packageName, source, url, factor);
-		show(image);
+		//show(image);
 		BufferedImage im00 = FileURLIO.readImage(url);
 		int w = im00.getWidth();
 		int h = im00.getHeight();
@@ -695,7 +695,7 @@ class CodeGenTest_Hw5_starter {
 		int factor = 2;
 		String url = testURL;
 		BufferedImage image = (BufferedImage) PLCLangExec.runCode(packageName, source, url, w, h, factor);
-		show(image);
+		//show(image);
 		BufferedImage im00 = FileURLIO.readImage(url);
 		BufferedImage expected = ImageOps.copyAndResize((ImageOps.binaryImageScalarOp(ImageOps.OP.TIMES, im00, factor)),
 				w, h);

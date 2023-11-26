@@ -37,10 +37,10 @@ public class CodeGenVisitor implements ASTVisitor {
 
         if(assignmentExpr==Type.PIXEL&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
 
-            javaCode.append("for(")
+            javaCode.append("\t\tfor(")
                     .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
 
-                    .append("aa");
+                    .append(" ").append("x = 0; x < ").append(lValue.getNameDef().getJavaName()).append(".getWidth(); x++){").append("\n");
 //continue here run and see what we need to do
         }
         else if (assignmentExpr == Type.IMAGE) {
@@ -153,81 +153,67 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
-
         String declarationType = typetostring(declaration.getNameDef().getType());
         String declarationName = declaration.getNameDef().getJavaName();
-        Expr initializerString = declaration.getInitializer();
-        Dimension dim=declaration.getNameDef().getDimension();
-        if(declarationType == "BufferedImage"&&initializerString!=null){
+        Expr initializer = declaration.getInitializer();
+        Dimension dimension = declaration.getNameDef().getDimension();
+
+        if (declarationType.equals("BufferedImage") && initializer != null) {
             javaCode.append("\t\t").append(declarationType).append(" ").append(declarationName);
 
-            if (initializerString != null && initializerString.getType() == Type.STRING) {
-                Object initializerResult = declaration.getInitializer().visit(this, arg);
-                javaCode.append(" = ");
-                javaCode.append("FileURLIO.readImage(")
+            if (initializer.getType() == Type.STRING) {
+                Object initializerResult = initializer.visit(this, arg);
+                javaCode.append(" = FileURLIO.readImage(")
                         .append(initializerResult)
                         .append(")");
-            }
-           else if (initializerString != null && initializerString.getType() == Type.IMAGE&&dim==null) {
-                Object initializerResult = declaration.getInitializer().visit(this, arg);
-                javaCode.append(" = ");
-                javaCode.append("ImageOps.cloneImage(")
+            } else if (initializer.getType() == Type.IMAGE && dimension == null) {
+                Object initializerResult = initializer.visit(this, arg);
+                javaCode.append(" = ImageOps.cloneImage(")
                         .append(initializerResult)
                         .append(")");
-            }
-            else if(dim!=null&&initializerString.getType() == Type.IMAGE){
-                Object initializerResult = declaration.getInitializer().visit(this, arg);
-               String aa=dim.getWidth().firstToken.text();
-                String bb=dim.getHeight().firstToken.text();
-                javaCode.append(" = ")
-                        .append("ImageOps.copyAndResize(")
-                        .append(initializerResult+","+aa+","+bb)
+            } else if (dimension != null && initializer.getType() == Type.IMAGE) {
+                Object initializerResult = initializer.visit(this, arg);
+                String width = dimension.getWidth().firstToken.text();
+                String height = dimension.getHeight().firstToken.text();
+                javaCode.append(" = ImageOps.copyAndResize(")
+                        .append(initializerResult).append(",")
+                        .append(width).append(",")
+                        .append(height)
                         .append(")");
             }
+
             javaCode.append(";\n");
+        } else if (initializer == null) {
+            Dimension dimensionString = declaration.getNameDef().getDimension();
+            String variableName = declaration.getNameDef().getJavaName();
+
+            if (dimensionString != null) {
+                Object dimensionResult = declaration.getNameDef().getDimension().visit(this, arg);
+                javaCode.append("\t\tfinal BufferedImage ").append(variableName)
+                        .append(" = ImageOps.makeImage(").append(dimensionResult).append(");\n");
+            } else {
+                throw new CodeGenException("No dimension found for declaration");
+            }
+        } else {
+            javaCode.append(declarationType)
+                    .append(" ")
+                    .append(declarationName)
+                    .append("=")
+                    .append(initializer.visit(this, arg).toString())
+                    .append(";");
             return javaCode.toString();
         }
-        else if(initializerString == null){
-               Dimension dimensionString = declaration.getNameDef().getDimension();
 
-
-               String a9=declaration.getNameDef().getJavaName();
-                if(dimensionString!=null){
-                    Object a=declaration.getNameDef().getDimension().visit(this,arg);
-
-
-                   javaCode.append("final BufferedImage ").append(a9).append("=").append("ImageOps.makeImage(").append(a).append(");");}
-               else {throw new CodeGenException("no dim from decl1");}
-              //  javaCode.append("int "+declarationName).append(";");
-            }
-           /* else{
-                javaCode.append(declarationType+" ")
-                        .append(declarationName)
-                        .append("=")
-                        .append(declaration.getInitializer().visit(this,arg).toString())
-                        .append(";");
-
-                return javaCode;
-
-            }
-            if(declaration.getInitializer()!=null){
-               Expr x=declaration.getInitializer();
-               if(x.getType()==Type.STRING){
-                    javaCode.append("=").append(x.toString());
-               }
-
-            }*/
-
-
-        return new CodeGenException("decl error");
+        return new CodeGenException("Declaration error");
     }
+
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
 
-        String aa=dimension.getWidth().visit(this,arg).toString();
-        String aaa=dimension.getHeight().visit(this,arg).toString();
-        return aa+","+aaa;
+        String width =dimension.getWidth().visit(this,arg).toString();
+        String height =dimension.getHeight().visit(this,arg).toString();
+        return width + "," + height;
     }
 
     @Override
@@ -246,19 +232,19 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitGuardedBlock(GuardedBlock guardedBlock, Object arg) throws PLCCompilerException {
-        Object aa= guardedBlock.getGuard().visit(this,arg);
-        Object bb=guardedBlock.getBlock().visit(this,arg);
+        Object guard = guardedBlock.getGuard().visit(this,arg);
+        Object block = guardedBlock.getBlock().visit(this,arg);
         javaCode.append("if(")
-                .append(aa)
+                .append(guard)
                 .append(")")
                 .append("{")
-                .append(bb)
+                .append(block)
                 .append("}");
         javaCode.append("else if(")
-                .append(aa)
+                .append(guard)
                 .append(")")
                 .append("{")
-                .append(bb)
+                .append(block)
                 .append("}");
 
         return javaCode.toString();
@@ -273,9 +259,6 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
         Object aa=ifStatement.visit(this,arg).toString();
-
-
-
         return "If";
     }
 
