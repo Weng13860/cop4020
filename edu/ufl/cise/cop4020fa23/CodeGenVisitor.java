@@ -41,8 +41,13 @@ public class CodeGenVisitor implements ASTVisitor {
 
             javaCode.append("\t\tfor(")
                     .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
+                    .append(" ").append("x = 0; x < ").append(lValue.getNameDef().getJavaName())
+                    .append(".getWidth(); x++){").append("\n").append("\t\t\tfor(")
+                    .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
+                    .append(" ").append("y = 0; y < ").append(lValue.getNameDef().getJavaName())
+                    .append(".getHeight(); y++){\n").append("\t\t\t\tImageOps.setRGB(")
+                    .append(expressionResult).append(")\t\t\t\n}\t\t\t\n}\n");
 
-                    .append(" ").append("x = 0; x < ").append(lValue.getNameDef().getJavaName()).append(".getWidth(); x++){").append("\n");
 //continue here run and see what we need to do
         }
         else if (assignmentExpr == Type.IMAGE) {
@@ -109,12 +114,10 @@ public class CodeGenVisitor implements ASTVisitor {
         else if(binaryExpr.getLeftExpr().getType() == Type.PIXEL){
             return "ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS," + left+  "," + right + ")";
         }
-        else if(binaryExpr.getOpKind() == Kind.DIV && binaryExpr.getLeftExpr().getType() == Type.IMAGE){
-            return "(ImageOps.binaryImageScalarOp(ImageOps.OP.DIV," + left+ "," + right + "))";
+        else if((binaryExpr.getOpKind() == Kind.DIV || binaryExpr.getOpKind() == Kind.TIMES) && binaryExpr.getLeftExpr().getType() == Type.IMAGE){
+            return "(ImageOps.binaryImageScalarOp(ImageOps.OP." + binaryExpr.getOpKind() + "," + left+ "," + right + "))";
         }
-        else if(binaryExpr.getOpKind() == Kind.TIMES && binaryExpr.getLeftExpr().getType() == Type.IMAGE){
-        return "ImageOps.binaryImageScalarOp(ImageOps.OP.TIMES,"+left+","+right+")";
-    }
+
         else{
             return "(" + left + " " + operator + " " + right + ")";
         }
@@ -170,7 +173,7 @@ public class CodeGenVisitor implements ASTVisitor {
         if(initializer==null){
             if(declarationType!=Type.IMAGE){
                 String aa=typetostring(declarationType);
-                javaCode.append("\t\t").append(aa).append(" ").append(declarationName).append(";");
+                javaCode.append("\t\t").append(aa).append(" ").append(declarationName).append(";\n");
 
             }
             else {
@@ -182,11 +185,13 @@ public class CodeGenVisitor implements ASTVisitor {
 
                     javaCode.append(" = ImageOps.copyAndResize(")
                             .append(initializerResult).append(",")
+
                             .append(w).append(",")
                             .append(h)
-                            .append(");");
+                            .append(");\n");
+
                 }
-                else throw new CodeGenException("line179");
+                else throw new CodeGenException("line190");
             }
         }else {
 
@@ -209,14 +214,14 @@ public class CodeGenVisitor implements ASTVisitor {
                     Object initializerResult = initializer.visit(this, arg);
                     javaCode.append(" = FileURLIO.readImage(")
                             .append(initializerResult)
-                            .append(");");
+                            .append(");\n");
                      }
                 }
                 else if(initializer.getType()==Type.IMAGE&&dimension==null){
                     Object initializerResult = initializer.visit(this, arg);
                     javaCode.append(" = ImageOps.cloneImage(")
                             .append(initializerResult)
-                            .append(");");
+                            .append(");\n");
                 }
                 else if(initializer.getType()==Type.IMAGE&&dimension!=null){
                     Object initializerResult = initializer.visit(this, arg);
@@ -225,13 +230,16 @@ public class CodeGenVisitor implements ASTVisitor {
 
                     javaCode.append(" = ImageOps.copyAndResize(")
                             .append(initializerResult).append(",")
+
                             .append(w).append(",")
                             .append(h)
-                            .append(");");
+                            .append(");\n");
+
+
                 }
                 else {
                     javaCode.append("=").append(declaration.getInitializer().visit(this,arg).toString())
-                            .append(";");
+                            .append(";\n");
                 }
 
 
@@ -343,8 +351,31 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
-        Object aa=ifStatement.visit(this,arg).toString();
-        return "If";
+        boolean hasTrueGuard = false;
+
+        // iterate over guarded blocks
+        for (GuardedBlock guardedBlock : ifStatement.getGuardedBlocks()) {
+            // if & condition
+            if(!hasTrueGuard) {
+                javaCode.append("\t\tif (");
+                hasTrueGuard = true;
+            }
+            else{
+                javaCode.append("\t\telse if (");
+            }
+            Object guard = guardedBlock.getGuard().visit(this, arg);
+            javaCode.append(guard);
+            javaCode.append(") {\n");
+
+
+            // visit block
+            Object block = guardedBlock.getBlock().visit(this, arg);
+            javaCode.append("\t").append(block);
+
+            javaCode.append("\t}\n");
+        }
+
+        return javaCode.toString();
     }
 
     @Override
