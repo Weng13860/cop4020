@@ -1,9 +1,11 @@
 package edu.ufl.cise.cop4020fa23;
 
 import edu.ufl.cise.cop4020fa23.ast.*;
+import edu.ufl.cise.cop4020fa23.ast.Dimension;
 import edu.ufl.cise.cop4020fa23.exceptions.CodeGenException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
-import java.awt.Color;
+
+import java.awt.*;
 import java.util.List;
 
 public class CodeGenVisitor implements ASTVisitor {
@@ -156,12 +158,86 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
-        String declarationType = typetostring(declaration.getNameDef().getType());
+
+        Type declarationType = declaration.getNameDef().getType();
         String declarationName = declaration.getNameDef().getJavaName();
         Expr initializer = declaration.getInitializer();
         Dimension dimension = declaration.getNameDef().getDimension();
+        String variableName = declaration.getNameDef().getJavaName();
+        if(initializer==null){
+            if(declarationType!=Type.IMAGE){
+                String aa=typetostring(declarationType);
+                javaCode.append("\t\t").append(aa).append(" ").append(declarationName).append(";");
 
-        if (declarationType.equals("BufferedImage") && initializer != null) {
+            }
+            else {
+                javaCode.append("\t\t").append(declarationType).append(" ").append(declarationName);
+                if(dimension!=null){
+                    Object initializerResult = initializer.visit(this, arg);
+                    String width = dimension.getWidth().firstToken.text();
+                    String height = dimension.getHeight().firstToken.text();
+                    javaCode.append(" = ImageOps.copyAndResize(")
+                            .append(initializerResult).append(",")
+                            .append(width).append(",")
+                            .append(height)
+                            .append(");");
+                }
+                else throw new CodeGenException("line179");
+            }
+        }else {
+
+            String aa=typetostring(declarationType);
+
+            javaCode.append("\t\t").append(aa).append(" ").append(declarationName);
+                if (initializer.getType() == Type.STRING) {
+                     if (dimension != null) {
+                        Object initializerResult = initializer.visit(this, arg);
+                        String width = dimension.getWidth().firstToken.text();
+                        String height = dimension.getHeight().firstToken.text();
+                        javaCode.append(" = ImageOps.copyAndResize(")
+                                .append(initializerResult).append(",")
+                                .append(width).append(",")
+                                .append(height)
+                                .append(");");
+                    }
+                     else{
+                    Object initializerResult = initializer.visit(this, arg);
+                    javaCode.append(" = FileURLIO.readImage(")
+                            .append(initializerResult)
+                            .append(");");
+                     }
+                }
+                else if(initializer.getType()==Type.IMAGE&&dimension==null){
+                    Object initializerResult = initializer.visit(this, arg);
+                    javaCode.append(" = ImageOps.cloneImage(")
+                            .append(initializerResult)
+                            .append(");");
+                }
+                else if(initializer.getType()==Type.IMAGE&&dimension!=null){
+                    Object initializerResult = initializer.visit(this, arg);
+                    String width = dimension.getWidth().firstToken.text();
+                    String height = dimension.getHeight().firstToken.text();
+                    javaCode.append(" = ImageOps.copyAndResize(")
+                            .append(initializerResult).append(",")
+                            .append(width).append(",")
+                            .append(height)
+                            .append(");");
+                }
+                else {
+                    javaCode.append("=").append(declaration.getInitializer().visit(this,arg).toString())
+                            .append(";");
+                }
+
+
+            }
+
+
+
+
+
+
+
+       /* if (declarationType.equals("BufferedImage") && initializer != null) {
             javaCode.append("\t\t").append(declarationType).append(" ").append(declarationName);
 
             if (initializer.getType() == Type.STRING) {
@@ -205,7 +281,7 @@ public class CodeGenVisitor implements ASTVisitor {
                     .append(initializer.visit(this, arg).toString())
                     .append(";");
             return javaCode.toString();
-        }
+        }*/
 
         return new CodeGenException("Declaration error");
     }

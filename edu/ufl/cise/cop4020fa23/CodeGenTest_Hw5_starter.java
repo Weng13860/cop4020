@@ -54,10 +54,10 @@ class CodeGenTest_Hw5_starter {
 	void show(BufferedImage image) throws IOException {
 		if (VERBOSE) {
 			ConsoleIO.displayImageOnScreen(image);
-			if (WAIT_FOR_INPUT) {
-				System.out.println("Enter a char");
-				int ch = System.in.read();
-			}
+			//if (WAIT_FOR_INPUT) {
+				//System.out.println("Enter a char");
+			//	int ch = System.in.read();
+			//}
 		}
 
 	}
@@ -662,7 +662,7 @@ class CodeGenTest_Hw5_starter {
 		int factor = 2;
 		String url = testURL;
 		BufferedImage image = (BufferedImage) PLCLangExec.runCode(packageName, source, url, factor);
-		//show(image);
+		show(image);
 		BufferedImage im00 = FileURLIO.readImage(url);
 		int w = im00.getWidth();
 		int h = im00.getHeight();
