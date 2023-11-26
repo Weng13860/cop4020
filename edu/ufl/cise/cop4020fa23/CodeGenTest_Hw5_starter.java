@@ -310,7 +310,7 @@ class CodeGenTest_Hw5_starter {
 		BufferedImage result = (BufferedImage) PLCLangExec.runCode(packageName, source, url);
 		BufferedImage expectedImage = FileURLIO.readImage(url);
 		compareImages(expectedImage, result);
-		//show(result);
+		show(result);
 	}
 
 	/**

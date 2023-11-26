@@ -112,6 +112,9 @@ public class CodeGenVisitor implements ASTVisitor {
         else if(binaryExpr.getOpKind() == Kind.DIV && binaryExpr.getLeftExpr().getType() == Type.IMAGE){
             return "(ImageOps.binaryImageScalarOp(ImageOps.OP.DIV," + left+ "," + right + "))";
         }
+        else if(binaryExpr.getOpKind() == Kind.TIMES && binaryExpr.getLeftExpr().getType() == Type.IMAGE){
+        return "ImageOps.binaryImageScalarOp(ImageOps.OP.TIMES,"+left+","+right+")";
+    }
         else{
             return "(" + left + " " + operator + " " + right + ")";
         }
@@ -174,12 +177,13 @@ public class CodeGenVisitor implements ASTVisitor {
                 javaCode.append("\t\t").append(declarationType).append(" ").append(declarationName);
                 if(dimension!=null){
                     Object initializerResult = initializer.visit(this, arg);
-                    String width = dimension.getWidth().firstToken.text();
-                    String height = dimension.getHeight().firstToken.text();
+                    String w=declaration.getNameDef().getDimension().getWidth().visit(this,arg).toString();
+                    String h=declaration.getNameDef().getDimension().getHeight().visit(this,arg).toString();
+
                     javaCode.append(" = ImageOps.copyAndResize(")
                             .append(initializerResult).append(",")
-                            .append(width).append(",")
-                            .append(height)
+                            .append(w).append(",")
+                            .append(h)
                             .append(");");
                 }
                 else throw new CodeGenException("line179");
@@ -191,14 +195,15 @@ public class CodeGenVisitor implements ASTVisitor {
             javaCode.append("\t\t").append(aa).append(" ").append(declarationName);
                 if (initializer.getType() == Type.STRING) {
                      if (dimension != null) {
-                        Object initializerResult = initializer.visit(this, arg);
-                        String width = dimension.getWidth().firstToken.text();
-                        String height = dimension.getHeight().firstToken.text();
-                        javaCode.append(" = ImageOps.copyAndResize(")
-                                .append(initializerResult).append(",")
-                                .append(width).append(",")
-                                .append(height)
-                                .append(");");
+                         Object initializerResult = initializer.visit(this, arg);
+                         String w=declaration.getNameDef().getDimension().getWidth().visit(this,arg).toString();
+                         String h=declaration.getNameDef().getDimension().getHeight().visit(this,arg).toString();
+
+                         javaCode.append(" = ImageOps.copyAndResize(")
+                                 .append(initializerResult).append(",")
+                                 .append(w).append(",")
+                                 .append(h)
+                                 .append(");");
                     }
                      else{
                     Object initializerResult = initializer.visit(this, arg);
@@ -215,12 +220,13 @@ public class CodeGenVisitor implements ASTVisitor {
                 }
                 else if(initializer.getType()==Type.IMAGE&&dimension!=null){
                     Object initializerResult = initializer.visit(this, arg);
-                    String width = dimension.getWidth().firstToken.text();
-                    String height = dimension.getHeight().firstToken.text();
+                    String w=declaration.getNameDef().getDimension().getWidth().visit(this,arg).toString();
+                    String h=declaration.getNameDef().getDimension().getHeight().visit(this,arg).toString();
+
                     javaCode.append(" = ImageOps.copyAndResize(")
                             .append(initializerResult).append(",")
-                            .append(width).append(",")
-                            .append(height)
+                            .append(w).append(",")
+                            .append(h)
                             .append(");");
                 }
                 else {
