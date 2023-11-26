@@ -107,6 +107,9 @@ public class CodeGenVisitor implements ASTVisitor {
         else if(binaryExpr.getLeftExpr().getType() == Type.PIXEL){
             return "ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS," + left+  "," + right + ")";
         }
+        else if(binaryExpr.getOpKind() == Kind.DIV && binaryExpr.getLeftExpr().getType() == Type.IMAGE){
+            return "(ImageOps.binaryImageScalarOp(ImageOps.OP.DIV," + left+ "," + right + "))";
+        }
         else{
             return "(" + left + " " + operator + " " + right + ")";
         }
