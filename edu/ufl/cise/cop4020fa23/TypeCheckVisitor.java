@@ -429,12 +429,19 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
         Type exprType = (Type) postfixExpr.primary().visit(this, arg);
-
+        Type inferredType;
+        if(postfixExpr.pixel()!=null&&postfixExpr.channel()!=null){
         postfixExpr.pixel().visit(this,arg);
-
         // inferring postfix type based on pixel and channel
-        Type inferredType = inferPostfixExprType(exprType, postfixExpr.pixel(), postfixExpr.channel());
-
+         inferredType = inferPostfixExprType(exprType, postfixExpr.pixel(), postfixExpr.channel());}
+        else if(postfixExpr.pixel()==null&&postfixExpr.channel()!=null){
+        // inferring postfix type based on pixel and channel
+         inferredType = inferPostfixExprType(exprType, null, postfixExpr.channel());}
+        else if(postfixExpr.pixel()==null&&postfixExpr.channel()==null)
+        { inferredType = inferPostfixExprType(exprType, null, null);}
+        else{
+            postfixExpr.pixel().visit(this,arg);
+         inferredType = inferPostfixExprType(exprType,postfixExpr.pixel() ,null);}
         postfixExpr.setType(inferredType);
 
         return inferredType;

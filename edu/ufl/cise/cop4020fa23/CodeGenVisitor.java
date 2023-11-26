@@ -29,15 +29,41 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-
         Object expressionResult = assignmentStatement.getE().visit(this, arg);
-
         Type assignmentExpr = assignmentStatement.getE().getType();
         LValue lValue = assignmentStatement.getlValue();
         Type lvt=lValue.getType();
         Type a=assignmentStatement.getlValue().getNameDef().getType();
+        if(lvt==Type.IMAGE){
+            if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()==null){
+                if(assignmentExpr==Type.IMAGE){
 
-        if(assignmentExpr==Type.PIXEL&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
+                }
+                else if(assignmentExpr==Type.PIXEL){
+
+                }
+                else if(assignmentExpr==Type.STRING){
+
+                }
+            }
+            else if(lValue.getChannelSelector()!=null){
+
+            }
+            else if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()!=null){
+
+            }
+
+        }
+        else if(lvt==Type.PIXEL&&lValue.getChannelSelector()!=null){
+
+        }
+        else {
+
+        }
+//copy code to conditions.
+
+
+        /*if(assignmentExpr==Type.PIXEL&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
 
             javaCode.append("\t\tfor(")
                     .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
@@ -47,8 +73,18 @@ public class CodeGenVisitor implements ASTVisitor {
                     .append(" ").append("y = 0; y < ").append(lValue.getNameDef().getJavaName())
                     .append(".getHeight(); y++){\n").append("\t\t\t\tImageOps.setRGB(")
                     .append(expressionResult).append(")\t\t\t\n}\t\t\t\n}\n");
-
-//continue here run and see what we need to do
+        }
+        else if(lvt==Type.PIXEL&&lValue.getChannelSelector()!=null){
+            String channel = lValue.getChannelSelector().visit(this, arg).toString();
+            javaCode.append(lValue.getNameDef().getJavaName())
+                    .append(" = PixelOps.set")
+                    .append(channel.substring(0, 1).toUpperCase())
+                    .append(channel.substring(1))
+                    .append("(")
+                    .append(lValue.getNameDef().getJavaName())
+                    .append(", ")
+                    .append(expressionResult)
+                    .append(");\n");
         }
         else if (assignmentExpr == Type.IMAGE) {
             javaCode.append("ImageOps.copyInto(")
@@ -95,7 +131,7 @@ public class CodeGenVisitor implements ASTVisitor {
                     .append(expressionResult)
                     .append(";\n");
         }
-
+*/
         return javaCode.toString();
     }
 
