@@ -34,12 +34,23 @@ public class CodeGenVisitor implements ASTVisitor {
         LValue lValue = assignmentStatement.getlValue();
         Type lvt=lValue.getType();
         Type a=assignmentStatement.getlValue().getNameDef().getType();
+        System.out.println(lValue);
         if(lvt==Type.IMAGE){
             if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()==null){
                 if(assignmentExpr==Type.IMAGE){
+                    javaCode.append("ImageOps.copyInto(")
+                            .append(lValue.getNameDef().getJavaName())
+                            .append(",")
+                            .append(expressionResult)
+                            .append(");\n");
 
                 }
                 else if(assignmentExpr==Type.PIXEL){
+                    javaCode.append("ImageOps.setAllPixels(")
+                            .append(lValue.getNameDef().getJavaName())
+                            .append(",")
+                            .append(expressionResult)
+                            .append(");\n");
 
                 }
                 else if(assignmentExpr==Type.STRING){
@@ -54,11 +65,27 @@ public class CodeGenVisitor implements ASTVisitor {
             }
 
         }
-        else if(lvt==Type.PIXEL&&lValue.getChannelSelector()!=null){
+        else if(lValue.getChannelSelector()!=null){
+            String channel = lValue.getChannelSelector().visit(this, arg).toString();
+            String color=channel.substring(0,1)+channel.substring(1);
+
+            javaCode.append(lValue.getNameDef().getJavaName())
+                    .append(" = PixelOps.set")
+                    .append(getColorString(color))
+                    .append("(")
+                    .append(lValue.getNameDef().getJavaName())
+                    .append(", ")
+                    .append(expressionResult)
+                    .append(");\n");
 
         }
         else {
 
+            javaCode.append("\t\t")
+                    .append(lValue.getNameDef().getJavaName())
+                    .append(" = ")
+                    .append(expressionResult)
+                    .append(";\n");
         }
 //copy code to conditions.
 
@@ -435,8 +462,14 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
         String f = typetostring(nameDef.getType());
+        if(nameDef.getDimension()!=null){
+
+            Dimension dim=nameDef.getDimension();
+            String name = nameDef.getName();
+            return f +" "+dim+ " " + name;
+        }else{
         String name = nameDef.getName();
-        return f + " " + name;
+        return f + " " + name;}
     }
 
     @Override
@@ -454,23 +487,31 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
+
         if (postfixExpr.getType() == Type.PIXEL) {
+
             String channelExpression = postfixExpr.channel().visit(this, arg).toString();
             javaCode.append(channelExpression);
         } else if (postfixExpr.getType() == Type.IMAGE) {
             Object channelExpression = postfixExpr.channel().visit(this, arg);
             Object pixelExpression = postfixExpr.pixel().visit(this, arg);
+            System.out.println(channelExpression);
+            System.out.println(pixelExpression);
 
             if (channelExpression == null && pixelExpression != null) {
+
                 javaCode.append("ImageOps.getRGB(").append(postfixExpr.primary().toString()).append(",").append(pixelExpression).append(")");
             } else if (channelExpression != null && pixelExpression != null) {
+
                 javaCode.append(channelExpression).append("(ImageOps.getRGB(").append(postfixExpr.primary().toString()).append(",").append(pixelExpression).append("))");
             } else if (channelExpression != null && pixelExpression == null) {
+
                 javaCode.append("ImageOps.extractRed(").append(postfixExpr.primary().toString()).append(")");
             } else {
                 throw new CodeGenException("no pixel or channel");
             }
         } else {
+
             // any other cases?
         }
         return javaCode;
@@ -542,6 +583,7 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
         String writeExpr = writeStatement.getExpr().visit(this, arg).toString();
+        System.out.println(writeExpr);
         if(writeStatement.getExpr().getType() == Type.PIXEL){
             javaCode.append("\t\tConsoleIO.writePixel(").append(writeExpr).append(");\n");
         }
@@ -587,6 +629,16 @@ public class CodeGenVisitor implements ASTVisitor {
                 throw new IllegalArgumentException("Unknown operator: " + operatorKind);
         }
     }
+    private String getColorString(String a) {
+        switch (a) {
+     case "RES_blue":
+            return "Blue";
+            case "RES_red":
+            return "Red";
+            case "RES_green":
+            return "Green";
+            default:
+                throw new IllegalArgumentException("Unknown color: " + a);}}
 
     private String getRGB(String color) {
         switch (color) {

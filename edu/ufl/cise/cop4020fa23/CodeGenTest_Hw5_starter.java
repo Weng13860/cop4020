@@ -28,7 +28,7 @@ class CodeGenTest_Hw5_starter {
 	// makes it easy to turn output on and off (and less typing than
 	// System.out.println)
 	static final boolean VERBOSE = true;
-	static final boolean WAIT_FOR_INPUT = true;
+	static final boolean WAIT_FOR_INPUT = false;
 
 	void show(Object obj) {
 		if (VERBOSE) {
@@ -54,10 +54,10 @@ class CodeGenTest_Hw5_starter {
 	void show(BufferedImage image) throws IOException {
 		if (VERBOSE) {
 			ConsoleIO.displayImageOnScreen(image);
-			//if (WAIT_FOR_INPUT) {
-				//System.out.println("Enter a char");
-			//	int ch = System.in.read();
-			//}
+			if (WAIT_FOR_INPUT) {
+				System.out.println("Enter a char");
+				int ch = System.in.read();
+			}
 		}
 
 	}
