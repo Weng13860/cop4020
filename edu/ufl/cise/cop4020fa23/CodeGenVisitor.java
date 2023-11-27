@@ -34,7 +34,7 @@ public class CodeGenVisitor implements ASTVisitor {
         LValue lValue = assignmentStatement.getlValue();
         Type lvt=lValue.getType();
         Type a=assignmentStatement.getlValue().getNameDef().getType();
-        System.out.println(lValue);
+
         if(lvt==Type.IMAGE){
             if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()==null){
                 if(assignmentExpr==Type.IMAGE){
@@ -66,9 +66,10 @@ public class CodeGenVisitor implements ASTVisitor {
 
         }
         else if(lValue.getChannelSelector()!=null){
+
             String channel = lValue.getChannelSelector().visit(this, arg).toString();
             String color=channel.substring(0,1)+channel.substring(1);
-
+            if(assignmentExpr!=null){
             javaCode.append(lValue.getNameDef().getJavaName())
                     .append(" = PixelOps.set")
                     .append(getColorString(color))
@@ -76,9 +77,17 @@ public class CodeGenVisitor implements ASTVisitor {
                     .append(lValue.getNameDef().getJavaName())
                     .append(", ")
                     .append(expressionResult)
-                    .append(");\n");
-
+                    .append(");\n");}
+            else {
+                javaCode.append(lValue.getNameDef().getJavaName())
+                        .append("PixelOps.")
+                        .append(getColorString(color).toLowerCase())
+                        .append("(")
+                        .append(lValue.getNameDef().getJavaName())
+                        .append(");\n");
+            }
         }
+
         else {
 
             javaCode.append("\t\t")
@@ -233,6 +242,7 @@ public class CodeGenVisitor implements ASTVisitor {
         Expr initializer = declaration.getInitializer();
         Dimension dimension = declaration.getNameDef().getDimension();
         String variableName = declaration.getNameDef().getJavaName();
+
         if(initializer==null){
             if(declarationType!=Type.IMAGE){
                 String aa=typetostring(declarationType);
@@ -487,12 +497,17 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-
-        if (postfixExpr.getType() == Type.PIXEL) {
+        Object aa=postfixExpr.primary().visit(this,arg);
+        if (postfixExpr.primary().getType() == Type.PIXEL) {
 
             String channelExpression = postfixExpr.channel().visit(this, arg).toString();
-            javaCode.append(channelExpression);
+            javaCode.append("PixelOps.")
+                    .append(getColorString(channelExpression.toString()).toLowerCase())
+                    .append("(")
+                    .append(aa.toString())
+                    .append(")\n");
         } else if (postfixExpr.getType() == Type.IMAGE) {
+
             Object channelExpression = postfixExpr.channel().visit(this, arg);
             Object pixelExpression = postfixExpr.pixel().visit(this, arg);
             System.out.println(channelExpression);
@@ -511,6 +526,7 @@ public class CodeGenVisitor implements ASTVisitor {
                 throw new CodeGenException("no pixel or channel");
             }
         } else {
+
 
             // any other cases?
         }
@@ -582,15 +598,20 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
-        String writeExpr = writeStatement.getExpr().visit(this, arg).toString();
-        System.out.println(writeExpr);
+
+
+
         if(writeStatement.getExpr().getType() == Type.PIXEL){
+            Object writeExpr = writeStatement.getExpr().visit(this,arg);
             javaCode.append("\t\tConsoleIO.writePixel(").append(writeExpr).append(");\n");
         }
         else{
-            javaCode.append("\t\tConsoleIO.write(").append(writeExpr).append(");\n");
+
+            String w1=writeStatement.getExpr().visit(this,arg).toString();
+            System.out.println(writeStatement);
+            //javaCode.append("\t\tConsoleIO.write(").append(writeExpr).append(");\n");
         }
-        return javaCode.toString();
+        return javaCode;
     }
 
     public String getGeneratedCode() {
