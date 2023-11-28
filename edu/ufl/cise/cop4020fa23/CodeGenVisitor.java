@@ -35,7 +35,7 @@ public class CodeGenVisitor implements ASTVisitor {
         LValue lValue = assignmentStatement.getlValue();
         Type lvt=lValue.getType();
         Type a=assignmentStatement.getlValue().getNameDef().getType();
-
+        System.out.println("aa");
         if(lvt==Type.IMAGE){
             if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()==null){
                 if(assignmentExpr==Type.IMAGE){
@@ -102,6 +102,7 @@ public class CodeGenVisitor implements ASTVisitor {
                         .append(lValue.getNameDef().getJavaName())
                         .append(");");
             }
+
         }
         else {
             assignmentStatementCode.append("\t\t")
@@ -109,6 +110,7 @@ public class CodeGenVisitor implements ASTVisitor {
                     .append(" = ")
                     .append(expressionResult)
                     .append(";\n");
+            return assignmentStatementCode.toString();
         }
 //copy code to conditions.
 
@@ -144,6 +146,7 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitBlock(Block block, Object arg) throws PLCCompilerException {
         StringBuilder blockCode = new StringBuilder();
         for (Block.BlockElem elem : block.getElems()) {
+
             blockCode.append(elem.visit(this, arg));
         }
         return blockCode.toString();
@@ -237,8 +240,9 @@ public class CodeGenVisitor implements ASTVisitor {
                         .append(h)
                         .append(");\n");
             } else {
+
                 javaCode.append("=").append(declaration.getInitializer().visit(this, arg).toString())
-                        .append(";\n");
+                     .append(";\n");
             }
         }
 
@@ -332,8 +336,6 @@ public class CodeGenVisitor implements ASTVisitor {
                 javaCode.append(guard);
                 javaCode.append(") {\n");
 
-
-                // visit block
                 Object block = guardedBlock.getBlock().visit(this, arg);
                 javaCode.append("\t").append(block);
 
@@ -344,9 +346,6 @@ public class CodeGenVisitor implements ASTVisitor {
                 Object guard = guardedBlock.getGuard().visit(this, arg);
                 javaCode.append(guard);
                 javaCode.append(") {\n");
-
-
-                // visit block
                 Object block = guardedBlock.getBlock().visit(this, arg);
                 javaCode.append("\t").append(block);
 
