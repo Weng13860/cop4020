@@ -495,20 +495,24 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
+        StringBuilder lValueCode = new StringBuilder();
+
         // Visit PixelSelector if present
         if (lValue.getPixelSelector() != null) {
-            javaCode.append(lValue.getPixelSelector().visit(this, arg)).append(".");
+            lValueCode.append(lValue.getPixelSelector().visit(this, arg)).append(".");
         }
 
         // Visit ChannelSelector if present
         if (lValue.getChannelSelector() != null) {
-            javaCode.append(lValue.getChannelSelector().visit(this, arg)).append(":");
+            lValueCode.append(lValue.getChannelSelector().visit(this, arg)).append(":");
         }
 
-        javaCode.append(lValue.getNameDef().getJavaName());
+        lValueCode.append(lValue.getNameDef().getJavaName());
+        javaCode.append(lValueCode);
 
-        return javaCode.toString();
+        return lValueCode.toString();
     }
+
 
 
     @Override
@@ -531,48 +535,54 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
-
-        String x=pixelSelector.xExpr().visit(this,arg).toString();
-        String y=pixelSelector.yExpr().visit(this,arg).toString();
-        return javaCode.append(x).append(",").append(y);
+        String x = pixelSelector.xExpr().visit(this, arg).toString();
+        String y = pixelSelector.yExpr().visit(this, arg).toString();
+        return x + "," + y;
     }
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-        Object aa=postfixExpr.primary().visit(this,arg);
+        StringBuilder postfixExprCode = new StringBuilder();
+        Object aa = postfixExpr.primary().visit(this, arg);
+
         if (postfixExpr.primary().getType() == Type.PIXEL) {
             String channelExpression = postfixExpr.channel().visit(this, arg).toString();
-            javaCode.append("PixelOps.")
+            postfixExprCode.append("PixelOps.")
                     .append(getColorString(channelExpression.toString()).toLowerCase())
                     .append("(")
                     .append(aa.toString())
                     .append(")\n");
         } else if (postfixExpr.getType() == Type.IMAGE) {
-
             Object channelExpression = postfixExpr.channel().visit(this, arg);
             Object pixelExpression = postfixExpr.pixel().visit(this, arg);
-            System.out.println(channelExpression);
-            System.out.println(pixelExpression);
 
             if (channelExpression == null && pixelExpression != null) {
-
-                javaCode.append("ImageOps.getRGB(").append(postfixExpr.primary().toString()).append(",").append(pixelExpression).append(")");
+                postfixExprCode.append("ImageOps.getRGB(")
+                        .append(postfixExpr.primary().toString())
+                        .append(",")
+                        .append(pixelExpression)
+                        .append(")");
             } else if (channelExpression != null && pixelExpression != null) {
-
-                javaCode.append(channelExpression).append("(ImageOps.getRGB(").append(postfixExpr.primary().toString()).append(",").append(pixelExpression).append("))");
+                postfixExprCode.append(channelExpression)
+                        .append("(ImageOps.getRGB(")
+                        .append(postfixExpr.primary().toString())
+                        .append(",")
+                        .append(pixelExpression)
+                        .append("))");
             } else if (channelExpression != null && pixelExpression == null) {
-
-                javaCode.append("ImageOps.extractRed(").append(postfixExpr.primary().toString()).append(")");
+                postfixExprCode.append("ImageOps.extractRed(")
+                        .append(postfixExpr.primary().toString())
+                        .append(")");
             } else {
                 throw new CodeGenException("no pixel or channel");
             }
         } else {
-
-
-            // any other cases?
+            // other cases?
         }
-        return javaCode;
+
+        return postfixExprCode.toString();
     }
+
 
 
     @Override
@@ -614,7 +624,7 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
         Object j = returnStatement.getE().visit(this, arg).toString();
         javaCode.append("\t\treturn ").append(j).append(";\n");
-        return null;
+        return javaCode.toString();
     }
 
 
