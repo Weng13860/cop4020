@@ -255,132 +255,69 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
-
         Type declarationType = declaration.getNameDef().getType();
         String declarationName = declaration.getNameDef().getJavaName();
         Expr initializer = declaration.getInitializer();
         Dimension dimension = declaration.getNameDef().getDimension();
-        String variableName = declaration.getNameDef().getJavaName();
 
-        if(initializer==null){
-            if(declarationType!=Type.IMAGE){
-                String aa=typetostring(declarationType);
+        if (initializer == null) {
+            if (declarationType != Type.IMAGE) {
+                String aa = typetostring(declarationType);
                 javaCode.append("\t\t").append(aa).append(" ").append(declarationName).append(";\n");
-
+            } else {
+                if (dimension != null) {
+                    Object dimensionResult = declaration.getNameDef().getDimension().visit(this, arg);
+                    javaCode.append("\t\tfinal BufferedImage ").append(declarationName)
+                            .append(" = ImageOps.makeImage(").append(dimensionResult).append(");\n");
+                } else {
+                    throw new CodeGenException("No dimension found for declaration");
+                }
             }
-            else {
-                javaCode.append("\t\t").append(declarationType).append(" ").append(declarationName);
-                if(dimension!=null){
+        } else {
+            String aa = typetostring(declarationType);
+            javaCode.append("\t\t").append(aa).append(" ").append(declarationName);
+
+            if (initializer.getType() == Type.STRING) {
+                if (dimension != null) {
                     Object initializerResult = initializer.visit(this, arg);
-                    String w=declaration.getNameDef().getDimension().getWidth().visit(this,arg).toString();
-                    String h=declaration.getNameDef().getDimension().getHeight().visit(this,arg).toString();
+                    String w = declaration.getNameDef().getDimension().getWidth().visit(this, arg).toString();
+                    String h = declaration.getNameDef().getDimension().getHeight().visit(this, arg).toString();
 
                     javaCode.append(" = ImageOps.copyAndResize(")
                             .append(initializerResult).append(",")
-
                             .append(w).append(",")
                             .append(h)
                             .append(");\n");
-
-                }
-                else throw new CodeGenException("line190");
-            }
-        }else {
-
-            String aa=typetostring(declarationType);
-
-            javaCode.append("\t\t").append(aa).append(" ").append(declarationName);
-                if (initializer.getType() == Type.STRING) {
-                     if (dimension != null) {
-                         Object initializerResult = initializer.visit(this, arg);
-                         String w=declaration.getNameDef().getDimension().getWidth().visit(this,arg).toString();
-                         String h=declaration.getNameDef().getDimension().getHeight().visit(this,arg).toString();
-
-                         javaCode.append(" = ImageOps.copyAndResize(")
-                                 .append(initializerResult).append(",")
-                                 .append(w).append(",")
-                                 .append(h)
-                                 .append(");");
-                    }
-                     else{
+                } else {
                     Object initializerResult = initializer.visit(this, arg);
                     javaCode.append(" = FileURLIO.readImage(")
                             .append(initializerResult)
                             .append(");\n");
-                     }
                 }
-                else if(initializer.getType()==Type.IMAGE && dimension==null){
-                    Object initializerResult = initializer.visit(this, arg);
-                    javaCode.append(" = ImageOps.cloneImage(")
-                            .append(initializerResult)
-                            .append(");\n");
-                }
-                else if(initializer.getType()==Type.IMAGE && dimension!=null){
-                    Object initializerResult = initializer.visit(this, arg);
-                    String w=declaration.getNameDef().getDimension().getWidth().visit(this,arg).toString();
-                    String h=declaration.getNameDef().getDimension().getHeight().visit(this,arg).toString();
-
-                    javaCode.append(" = ImageOps.copyAndResize(")
-                            .append(initializerResult).append(",")
-                            .append(w).append(",")
-                            .append(h)
-                            .append(");\n");
-                }
-                else {
-                    javaCode.append("=").append(declaration.getInitializer().visit(this,arg).toString())
-                            .append(";\n");
-                }
-            }
-
-
-       /* if (declarationType.equals("BufferedImage") && initializer != null) {
-            javaCode.append("\t\t").append(declarationType).append(" ").append(declarationName);
-
-            if (initializer.getType() == Type.STRING) {
-                Object initializerResult = initializer.visit(this, arg);
-                javaCode.append(" = FileURLIO.readImage(")
-                        .append(initializerResult)
-                        .append(")");
             } else if (initializer.getType() == Type.IMAGE && dimension == null) {
                 Object initializerResult = initializer.visit(this, arg);
                 javaCode.append(" = ImageOps.cloneImage(")
                         .append(initializerResult)
-                        .append(")");
-            } else if (dimension != null && initializer.getType() == Type.IMAGE) {
+                        .append(");\n");
+            } else if (initializer.getType() == Type.IMAGE && dimension != null) {
                 Object initializerResult = initializer.visit(this, arg);
-                String width = dimension.getWidth().firstToken.text();
-                String height = dimension.getHeight().firstToken.text();
+                String w = declaration.getNameDef().getDimension().getWidth().visit(this, arg).toString();
+                String h = declaration.getNameDef().getDimension().getHeight().visit(this, arg).toString();
+
                 javaCode.append(" = ImageOps.copyAndResize(")
                         .append(initializerResult).append(",")
-                        .append(width).append(",")
-                        .append(height)
-                        .append(")");
-            }
-
-            javaCode.append(";\n");
-        } else if (initializer == null) {
-            Dimension dimensionString = declaration.getNameDef().getDimension();
-            String variableName = declaration.getNameDef().getJavaName();
-
-            if (dimensionString != null) {
-                Object dimensionResult = declaration.getNameDef().getDimension().visit(this, arg);
-                javaCode.append("\t\tfinal BufferedImage ").append(variableName)
-                        .append(" = ImageOps.makeImage(").append(dimensionResult).append(");\n");
+                        .append(w).append(",")
+                        .append(h)
+                        .append(");\n");
             } else {
-                throw new CodeGenException("No dimension found for declaration");
+                javaCode.append("=").append(declaration.getInitializer().visit(this, arg).toString())
+                        .append(";\n");
             }
-        } else {
-            javaCode.append(declarationType)
-                    .append(" ")
-                    .append(declarationName)
-                    .append("=")
-                    .append(initializer.visit(this, arg).toString())
-                    .append(";");
-            return javaCode.toString();
-        }*/
+        }
 
-        return new CodeGenException("Declaration error");
+        return null; // or any appropriate return value
     }
+
 
 
     @Override
