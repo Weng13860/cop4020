@@ -35,7 +35,6 @@ public class CodeGenVisitor implements ASTVisitor {
         LValue lValue = assignmentStatement.getlValue();
         Type lvt=lValue.getType();
         Type a=assignmentStatement.getlValue().getNameDef().getType();
-        System.out.println(assignmentExpr);
 
         if(lvt==Type.IMAGE){
             if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()==null){
@@ -104,9 +103,7 @@ public class CodeGenVisitor implements ASTVisitor {
                         .append(");");
             }
         }
-
         else {
-
             assignmentStatementCode.append("\t\t")
                     .append(lValue.getNameDef().getJavaName())
                     .append(" = ")
@@ -115,76 +112,6 @@ public class CodeGenVisitor implements ASTVisitor {
         }
 //copy code to conditions.
 
-
-        /*if(assignmentExpr==Type.PIXEL&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
-
-            javaCode.append("\t\tfor(")
-                    .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
-                    .append(" ").append("x = 0; x < ").append(lValue.getNameDef().getJavaName())
-                    .append(".getWidth(); x++){").append("\n").append("\t\t\tfor(")
-                    .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
-                    .append(" ").append("y = 0; y < ").append(lValue.getNameDef().getJavaName())
-                    .append(".getHeight(); y++){\n").append("\t\t\t\tImageOps.setRGB(")
-                    .append(expressionResult).append(")\t\t\t\n}\t\t\t\n}\n");
-        }
-        else if(lvt==Type.PIXEL&&lValue.getChannelSelector()!=null){
-            String channel = lValue.getChannelSelector().visit(this, arg).toString();
-            javaCode.append(lValue.getNameDef().getJavaName())
-                    .append(" = PixelOps.set")
-                    .append(channel.substring(0, 1).toUpperCase())
-                    .append(channel.substring(1))
-                    .append("(")
-                    .append(lValue.getNameDef().getJavaName())
-                    .append(", ")
-                    .append(expressionResult)
-                    .append(");\n");
-        }
-        else if (assignmentExpr == Type.IMAGE) {
-            javaCode.append("ImageOps.copyInto(")
-                    .append(lValue.getNameDef().getJavaName())
-                    .append("=")
-                    .append(expressionResult)
-                    .append(");\n");
-        }
-        else if (assignmentExpr == Type.PIXEL) {
-            if (lValue.getChannelSelector() != null) {
-                String channel = lValue.getChannelSelector().visit(this, arg).toString();
-                javaCode.append(lValue.getNameDef().getJavaName())
-                        .append(" = PixelOps.set")
-                        .append(channel.substring(0, 1).toUpperCase())
-                        .append(channel.substring(1))
-                        .append("(")
-                        .append(lValue.getNameDef().getJavaName())
-                        .append(", ")
-                        .append(expressionResult)
-                        .append(");\n");
-            }
-            else {
-                System.out.println("null channel sele");
-                javaCode.append("\t\t")
-                        .append(lValue.getNameDef().getJavaName())
-                        .append(" = ")
-                        .append(expressionResult)
-                        .append(";\n");
-            }
-        }
-        else if (lValue.getType() == Type.PIXEL){
-            javaCode.append("\t\t").append(lValue.getNameDef().getJavaName())
-                    .append(" = PixelOps.pack(").append(expressionResult)
-                    .append(",")
-                    .append(expressionResult)
-                    .append(",")
-                    .append(expressionResult)
-                    .append(");\n");
-        }
-        else {
-            javaCode.append("\t\t")
-                    .append(lValue.getNameDef().getJavaName())
-                    .append(" = ")
-                    .append(expressionResult)
-                    .append(";\n");
-        }
-*/
         javaCode.append(assignmentStatementCode);
         return assignmentStatementCode.toString();
     }
@@ -488,7 +415,7 @@ public class CodeGenVisitor implements ASTVisitor {
                     .append(getColorString(channelExpression.toString()).toLowerCase())
                     .append("(")
                     .append(aa.toString())
-                    .append(")\n");
+                    .append(")");
         } else if (postfixExpr.getType() == Type.IMAGE) {
             Object channelExpression = postfixExpr.channel().visit(this, arg);
             Object pixelExpression = postfixExpr.pixel().visit(this, arg);
@@ -595,6 +522,7 @@ public class CodeGenVisitor implements ASTVisitor {
             //System.out.println(writeStatement);
             writeStatementCode.append("\t\tConsoleIO.write(").append(writeExpr).append(");\n");
         }
+        javaCode.append(writeStatementCode);
         return writeStatementCode.toString();
     }
 
