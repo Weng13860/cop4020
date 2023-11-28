@@ -310,7 +310,7 @@ class CodeGenTest_Hw5_starter {
 		BufferedImage result = (BufferedImage) PLCLangExec.runCode(packageName, source, url);
 		BufferedImage expectedImage = FileURLIO.readImage(url);
 		compareImages(expectedImage, result);
-		show(result);
+		//show(result);
 	}
 
 	/**
@@ -662,7 +662,7 @@ class CodeGenTest_Hw5_starter {
 		int factor = 2;
 		String url = testURL;
 		BufferedImage image = (BufferedImage) PLCLangExec.runCode(packageName, source, url, factor);
-		show(image);
+		//show(image);
 		BufferedImage im00 = FileURLIO.readImage(url);
 		int w = im00.getWidth();
 		int h = im00.getHeight();
