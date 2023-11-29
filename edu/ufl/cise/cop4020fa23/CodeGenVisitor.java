@@ -36,6 +36,17 @@ public class CodeGenVisitor implements ASTVisitor {
         Type lvt=lValue.getType();
         Type a=assignmentStatement.getlValue().getNameDef().getType();
         System.out.println("aa");
+
+        if(assignmentExpr==Type.PIXEL&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
+            javaCode.append("\t\tfor(")
+                    .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
+                    .append(" ").append("x = 0; x < ").append(lValue.getNameDef().getJavaName())
+                    .append(".getWidth(); x++){").append("\n").append("\t\t\tfor(")
+                    .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
+                    .append(" ").append("y = 0; y < ").append(lValue.getNameDef().getJavaName())
+                    .append(".getHeight(); y++){\n")
+                    .append(expressionResult).append("\n}\n}\n");
+        }
         if(lvt==Type.IMAGE){
             if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()==null){
                 if(assignmentExpr==Type.IMAGE){
@@ -59,8 +70,9 @@ public class CodeGenVisitor implements ASTVisitor {
                 }
             }
             else if(lValue.getChannelSelector()!=null){
-
+                throw new UnsupportedOperationException("channel selector is not null");
             }
+            // SyntheticNameDef
             else if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()!=null){
 
             }
