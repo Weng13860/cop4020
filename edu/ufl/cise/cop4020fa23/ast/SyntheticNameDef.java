@@ -73,4 +73,5 @@ public class SyntheticNameDef extends NameDef {
 	@Override
 	public
 	Dimension getDimension() {throw new UnsupportedOperationException();}
+
 }

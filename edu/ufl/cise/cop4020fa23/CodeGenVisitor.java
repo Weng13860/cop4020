@@ -35,19 +35,37 @@ public class CodeGenVisitor implements ASTVisitor {
         LValue lValue = assignmentStatement.getlValue();
         Type lvt=lValue.getType();
         Type a=assignmentStatement.getlValue().getNameDef().getType();
-        System.out.println("aa");
 
         if(assignmentExpr==Type.PIXEL&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
-            javaCode.append("\t\tfor(")
+            Object xExpr = lValue.getPixelSelector().xExpr();
+            String xName = ((IdentExpr) xExpr).getName();
+//            lValue.setNameDef(new SyntheticNameDef(xName));
+            Expr yExpr = lValue.getPixelSelector().yExpr();
+            String yName = ((IdentExpr) yExpr).getName();
+            //lValue.setNameDef();
+
+
+            assignmentStatementCode.append("\t\tfor(")
                     .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
-                    .append(" ").append("x = 0; x < ").append(lValue.getNameDef().getJavaName())
-                    .append(".getWidth(); x++){").append("\n").append("\t\t\tfor(")
+                    .append(" ").append(xName).append("$4 = 0; ").append(xName).append("$4 < ")
+                    .append(lValue.getNameDef().getJavaName())
+                    .append(".getWidth(); ").append(xName).append("$4++){\n").append("\t\t\tfor(")
                     .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
-                    .append(" ").append("y = 0; y < ").append(lValue.getNameDef().getJavaName())
-                    .append(".getHeight(); y++){\n")
-                    .append(expressionResult).append("\n}\n}\n");
+                    .append(" ").append(yName).append("$4 = 0; ").append(yName).append("$4 < ")
+                    .append(lValue.getNameDef().getJavaName())
+                    .append(".getHeight(); ").append(yName).append("$4++){\n")
+                    .append("\t\t\t\tImageOps.setRGB(")
+                    .append(lValue.getNameDef().getJavaName())
+                    .append(",")
+                    .append(xName)
+                    .append("$4,")
+                    .append(yName)
+                    .append("$4,")
+                    .append(expressionResult)
+                    .append(");\n")
+                    .append("\n}\n}\n");
         }
-        if(lvt==Type.IMAGE){
+        else if(lvt==Type.IMAGE){
             if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()==null){
                 if(assignmentExpr==Type.IMAGE){
                     assignmentStatementCode.append("ImageOps.copyInto(")
@@ -330,7 +348,6 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-
         return identExpr.getNameDef().getJavaName();
     }
 

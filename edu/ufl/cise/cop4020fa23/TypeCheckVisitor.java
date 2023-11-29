@@ -225,8 +225,6 @@ public class TypeCheckVisitor implements ASTVisitor {
             throw new TypeCheckException("Variable name '" + nameDef.getName() + "' already exists in the current scope.");
         }
 
-
-
         // setting java name in nameDef
         nameDef.setJavaName(javaName);
 
