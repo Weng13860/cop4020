@@ -263,7 +263,7 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitDoStatement(DoStatement doStatement, Object arg) throws PLCCompilerException {
         boolean hasTrueGuard = false;
         // iterate over guarded blocks
-        javaCode.append("\t\tboolean continue$0=").append(hasTrueGuard).append(";\n");
+        javaCode.append("\t\t{ boolean continue$0=").append(hasTrueGuard).append(";\n");
         hasTrueGuard=!hasTrueGuard;
         javaCode.append("\t\twhile (");
         hasTrueGuard = true;
