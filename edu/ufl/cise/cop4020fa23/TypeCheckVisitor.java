@@ -37,6 +37,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
 
         public void leaveScope() {
+            currentScopeID--;
             int poppedScope = scopeStack.pop();
 
             // remove entries associated with the popped scope

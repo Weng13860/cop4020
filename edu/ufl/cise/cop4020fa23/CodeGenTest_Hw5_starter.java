@@ -585,7 +585,7 @@ class CodeGenTest_Hw5_starter {
 				   redImage = RED;
 				   int xslice = w/8;
 				   int yslice = h/8;
-				   image [w,h] checkers;
+				   image[w,h] checkers;
 				   checkers[x,y] = ? (x/xslice)%2 == (y/yslice)%2 -> im0[x,y], redImage[x,y];
 				   ^checkers;
 				   :>
