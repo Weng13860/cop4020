@@ -493,7 +493,26 @@ class CodeGenTest_Hw5_starter {
 				expected.setRGB(x, y, y > 150 ? Color.blue.getRGB() : Color.green.getRGB());
 		compareImages(expected, result);
 	}
-
+/*package edu.ufl.cise.cop4020fa23;
+import java.awt.image.BufferedImage;
+import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
+	public class makeImage{
+		public static BufferedImage apply(int w$1, int h$1){
+			final BufferedImage im$2=ImageOps.makeImage(w$1,h$1);
+			for (int x$3=0; x$3<im$2.getWidth();x$3++){
+				for (int y$3=0; y$3<im$2.getHeight();y$3++){
+					ImageOps.setRGB(im$2,x$3,y$3,(y$3>(h$1/2)?0xff0000ff:0xff00ff00));
+				}
+			};
+			final BufferedImage imRotate$2=ImageOps.makeImage(h$1,w$1);
+			for (int x$4=0; x$4<imRotate$2.getWidth();x$4++){
+				for (int y$4=0; y$4<imRotate$2.getHeight();y$4++){
+					ImageOps.setRGB(imRotate$2,x$4,y$4,ImageOps.getRGB(im$2,y$4,x$4));
+				}
+			};
+			return imRotate$2;
+		}
+	}*/
 	@Test
 	void hw5_18() throws Exception {
 		BufferedImage result = (BufferedImage) PLCLangExec.runCode(packageName, """

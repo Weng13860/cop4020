@@ -6,6 +6,7 @@ import edu.ufl.cise.cop4020fa23.exceptions.CodeGenException;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 
 import java.awt.*;
+import java.util.LinkedList;
 import java.util.List;
 
 public class CodeGenVisitor implements ASTVisitor {
@@ -35,6 +36,7 @@ public class CodeGenVisitor implements ASTVisitor {
         LValue lValue = assignmentStatement.getlValue();
         Type lvt=lValue.getType();
         Type a=assignmentStatement.getlValue().getNameDef().getType();
+
 
         if(assignmentExpr==Type.PIXEL&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
             Object xExpr = lValue.getPixelSelector().xExpr();
@@ -166,6 +168,9 @@ public class CodeGenVisitor implements ASTVisitor {
         else if((binaryExpr.getOpKind() == Kind.DIV || binaryExpr.getOpKind() == Kind.TIMES) && binaryExpr.getLeftExpr().getType() == Type.IMAGE){
             return "(ImageOps.binaryImageScalarOp(ImageOps.OP." + binaryExpr.getOpKind() + "," + left+ "," + right + "))";
         }
+        else if(binaryExpr.getLeftExpr().getType() == Type.IMAGE){
+            return "ImageOps.binaryImageImageOp(ImageOps.OP.PLUS," + left+  "," + right + ")";
+        }
 
         else{
             return "(" + left + " " + operator + " " + right + ")";
@@ -202,8 +207,9 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCCompilerException {
         String condition = conditionalExpr.getGuardExpr().visit(this, arg).toString();
-        String trueExpr = conditionalExpr.getTrueExpr().visit(this, arg).toString();
-        String falseExpr = conditionalExpr.getFalseExpr().visit(this, arg).toString();
+        Object trueExpr = conditionalExpr.getTrueExpr().visit(this, arg);
+
+        Object falseExpr = conditionalExpr.getFalseExpr().visit(this, arg);
         return "(" + condition + " ? " + trueExpr + " : " + falseExpr + ")";
     }
 
@@ -236,8 +242,21 @@ public class CodeGenVisitor implements ASTVisitor {
         } else {
             String aa = typetostring(declarationType);
             javaCode.append("\t\t").append(aa).append(" ").append(declarationName);
+            if(declarationType==Type.IMAGE&&dimension!=null&&initializer.getType()==Type.STRING){
+                Object initializerResult = initializer.visit(this, arg);
+                String w = declaration.getNameDef().getDimension().getWidth().visit(this, arg).toString();
+                String h = declaration.getNameDef().getDimension().getHeight().visit(this, arg).toString();
 
-            if (initializer.getType() == Type.STRING) {
+                javaCode.append(" =FileURLIO.readImage(")
+                        .append(initializerResult).append(",")
+                        .append(w).append(",")
+                        .append(h)
+                        .append(");\n");
+
+            }
+
+
+           else if (initializer.getType() == Type.STRING) {
                 if (dimension != null) {
                     Object initializerResult = initializer.visit(this, arg);
                     String w = declaration.getNameDef().getDimension().getWidth().visit(this, arg).toString();
@@ -250,12 +269,13 @@ public class CodeGenVisitor implements ASTVisitor {
                             .append(");\n");
                 } else {
                     Object initializerResult = initializer.visit(this, arg);
-                    javaCode.append(" = FileURLIO.readImage(")
+                    javaCode.append(" =FileURLIO.readImage(")
                             .append(initializerResult)
                             .append(");\n");
                 }
             } else if (initializer.getType() == Type.IMAGE && dimension == null) {
                 Object initializerResult = initializer.visit(this, arg);
+
                 javaCode.append(" = ImageOps.cloneImage(")
                         .append(initializerResult)
                         .append(");\n");
@@ -264,7 +284,7 @@ public class CodeGenVisitor implements ASTVisitor {
                 String w = declaration.getNameDef().getDimension().getWidth().visit(this, arg).toString();
                 String h = declaration.getNameDef().getDimension().getHeight().visit(this, arg).toString();
 
-                javaCode.append(" = ImageOps.copyAndResize(")
+                javaCode.append("= ImageOps.copyAndResize( ")
                         .append(initializerResult).append(",")
                         .append(w).append(",")
                         .append(h)
@@ -444,24 +464,27 @@ public class CodeGenVisitor implements ASTVisitor {
                     .append("(")
                     .append(aa.toString())
                     .append(")");
-        } else if (postfixExpr.getType() == Type.IMAGE) {
-            Object channelExpression = postfixExpr.channel().visit(this, arg);
+        } else if (postfixExpr.primary().getType() == Type.IMAGE) {
+
+
             Object pixelExpression = postfixExpr.pixel().visit(this, arg);
 
-            if (channelExpression == null && pixelExpression != null) {
+            if (postfixExpr.channel() == null && pixelExpression != null) {
+
                 postfixExprCode.append("ImageOps.getRGB(")
-                        .append(postfixExpr.primary().toString())
+                        .append(postfixExpr.primary().visit(this,arg))
                         .append(",")
                         .append(pixelExpression)
                         .append(")");
-            } else if (channelExpression != null && pixelExpression != null) {
+            } else if (postfixExpr.channel() != null && pixelExpression != null) {
+                Object channelExpression = postfixExpr.channel().visit(this, arg);
                 postfixExprCode.append(channelExpression)
                         .append("(ImageOps.getRGB(")
                         .append(postfixExpr.primary().toString())
                         .append(",")
                         .append(pixelExpression)
                         .append("))");
-            } else if (channelExpression != null && pixelExpression == null) {
+            } else if (postfixExpr.channel() != null && pixelExpression == null) {
                 postfixExprCode.append("ImageOps.extractRed(")
                         .append(postfixExpr.primary().toString())
                         .append(")");
