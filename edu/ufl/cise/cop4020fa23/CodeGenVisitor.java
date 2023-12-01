@@ -267,11 +267,15 @@ public class CodeGenVisitor implements ASTVisitor {
                             .append(w).append(",")
                             .append(h)
                             .append(");\n");
-                } else {
+                } else if(declarationType == Type.IMAGE){
                     Object initializerResult = initializer.visit(this, arg);
                     javaCode.append(" =FileURLIO.readImage(")
                             .append(initializerResult)
                             .append(");\n");
+                }
+                else{
+                    javaCode.append("=").append(declaration.getInitializer().visit(this, arg).toString())
+                            .append(";\n");
                 }
             } else if (initializer.getType() == Type.IMAGE && dimension == null) {
                 Object initializerResult = initializer.visit(this, arg);
@@ -558,7 +562,9 @@ public class CodeGenVisitor implements ASTVisitor {
         if(operator=="RES_height"){
            return  "("+ operand + ".getHeight())";
         }
-        return new CodeGenException("unary error");
+        else{
+            return "(" + operator + operand + ")";
+        }
     }
 
     @Override
