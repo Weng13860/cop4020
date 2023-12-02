@@ -11,6 +11,7 @@ import java.util.List;
 
 public class CodeGenVisitor implements ASTVisitor {
 
+    private boolean isWithinIfStatement;
     private StringBuilder javaCode;
     private String packageName;
 
@@ -333,6 +334,7 @@ public class CodeGenVisitor implements ASTVisitor {
         doStatementCode.append("!continue$0){\n");
         doStatementCode.append("\t\tcontinue$0=true;\n");
         for (GuardedBlock guardedBlock : doStatement.getGuardedBlocks()) {
+            isWithinIfStatement = true;
             // if & condition
             doStatementCode.append("\t\tif (");
 
@@ -348,6 +350,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
             doStatementCode.append("\t}}\n");
         }
+        isWithinIfStatement = false;
         doStatementCode.append("}};\n");
         javaCode.append(doStatementCode);
         return doStatementCode.toString();
@@ -376,7 +379,8 @@ public class CodeGenVisitor implements ASTVisitor {
                 .append(block)
                 .append("}\n");
 
-        return guardedBlockCode.toString();
+        //return guardedBlockCode.toString();
+        return null;
     }
 
 
@@ -391,35 +395,43 @@ public class CodeGenVisitor implements ASTVisitor {
         StringBuilder ifStatementCode = new StringBuilder();
 
         // iterate over guarded blocks
+        int numBlocks = ifStatement.getGuardedBlocks().size();
+        int blockIndex = 0;
+
         for (GuardedBlock guardedBlock : ifStatement.getGuardedBlocks()) {
+            isWithinIfStatement = true;
+
             // if & condition
-            if(!hasTrueGuard) {
+            if (!hasTrueGuard) {
                 ifStatementCode.append("\t\tif (");
                 hasTrueGuard = true;
-                Object guard = guardedBlock.getGuard().visit(this, arg);
-                ifStatementCode.append(guard);
-                ifStatementCode.append(") {\n");
-
-                Object block = guardedBlock.getBlock().visit(this, arg);
-                ifStatementCode.append("\t").append(block);
-
-                ifStatementCode.append("\t}\n");
-            }
-            else{
+            } else {
                 ifStatementCode.append("\t\telse if (");
-                Object guard = guardedBlock.getGuard().visit(this, arg);
-                ifStatementCode.append(guard);
-                ifStatementCode.append(") {\n");
-                Object block = guardedBlock.getBlock().visit(this, arg);
-                ifStatementCode.append("\t").append(block);
+            }
 
+            Object guard = guardedBlock.getGuard().visit(this, arg);
+            ifStatementCode.append(guard);
+            ifStatementCode.append(") {\n");
+
+            Object block = guardedBlock.getBlock().visit(this, arg);
+            ifStatementCode.append("\t").append(block);
+
+            if (blockIndex < numBlocks - 1) {
+                ifStatementCode.append("\t}\n");
+            } else {
+                // Last else if block, add a semicolon
                 ifStatementCode.append("\t};\n");
             }
+
+            blockIndex++;
         }
+
+        isWithinIfStatement = false;
 
         javaCode.append(ifStatementCode);
         return ifStatementCode.toString();
     }
+
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
@@ -553,10 +565,16 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
-        Object j = returnStatement.getE().visit(this, arg).toString();
+        Object j = returnStatement.getE().visit(this, arg);
         StringBuilder returnCode = new StringBuilder();
-        returnCode.append("\t\treturn ").append(j).append(";\n");
-        javaCode.append(returnCode);
+
+        returnCode.append("\t\treturn ").append(j.toString()).append(";\n");
+
+        // Check if the return statement is not within an if statement
+        if (!isWithinIfStatement) {
+            javaCode.append(returnCode);
+        }
+
         return returnCode.toString();
     }
 
