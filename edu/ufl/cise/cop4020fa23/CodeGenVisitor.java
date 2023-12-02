@@ -39,7 +39,7 @@ public class CodeGenVisitor implements ASTVisitor {
         Type a=assignmentStatement.getlValue().getNameDef().getType();
 
 
-        if(assignmentExpr==Type.PIXEL&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
+        if((assignmentExpr==Type.PIXEL || assignmentExpr == Type.INT)&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
             Object xExpr = lValue.getPixelSelector().xExpr();
             String xName = ((IdentExpr) xExpr).getName();
 //            lValue.setNameDef(new SyntheticNameDef(xName));
@@ -87,7 +87,11 @@ public class CodeGenVisitor implements ASTVisitor {
 
                 }
                 else if(assignmentExpr==Type.STRING){
-
+                    assignmentStatementCode.append("ImageOps.copyInto(FileURLIO.readImage(")
+                            .append(expressionResult)
+                            .append("),")
+                            .append(lValue.getNameDef().getJavaName())
+                            .append(");\n");
                 }
             }
             else if(lValue.getChannelSelector()!=null){
@@ -101,10 +105,10 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         else if(lvt == Type.PIXEL && lValue.getChannelSelector() == null){
             if(assignmentExpr == Type.INT && assignmentStatement.firstToken().kind() != Kind.CONST){
-                assignmentStatementCode.append("\t\t").append(lValue.getNameDef().getJavaName()).append(" = ")
-                        .append("PixelOps.pack(").append(expressionResult).append(", ")
-                        .append(expressionResult).append(", ")
-                        .append(expressionResult).append(");\n");
+                    assignmentStatementCode.append("\t\t").append(lValue.getNameDef().getJavaName()).append(" = ")
+                            .append("PixelOps.pack(").append(expressionResult).append(", ")
+                            .append(expressionResult).append(", ")
+                            .append(expressionResult).append(");\n");
             }
             else{
                 assignmentStatementCode.append("\t\t")
@@ -161,7 +165,12 @@ public class CodeGenVisitor implements ASTVisitor {
         String right = binaryExpr.getRightExpr().visit(this, arg).toString();
 
         if(binaryExpr.getOpKind()==Kind.EXP){
-            return "((int)Math.round(Math.pow(" + left + "," + right + ")))";
+            if(binaryExpr.getLeftExpr().getType() == Type.IMAGE){
+                return "ImageOps.setRGB(" + "((int)Math.round(Math.pow(" + "))))";
+            }
+            else{
+                return "((int)Math.round(Math.pow(" + left + "," + right + ")))";
+            }
         }
         else if(binaryExpr.getLeftExpr().getType() == Type.PIXEL){
             if(binaryExpr.getOpKind() == Kind.PLUS){
