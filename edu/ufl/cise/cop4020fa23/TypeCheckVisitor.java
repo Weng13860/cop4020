@@ -209,6 +209,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
+        //System.out.println(declaration.getNameDef().getJavaName());
         // visit expr first
         Expr expr = declaration.getInitializer();
         Type exprType = null;
@@ -221,6 +222,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         Type nameDefType = nameDef.getType();
 
         String javaName = generateUniqueJavaName(nameDef.getName());
+
         // checking for redeclaration in the same scope
         if (st.lookup(nameDef.getJavaName()) != null && nameDef.getType() == st.lookup(nameDef.getName()).getType()) {
             throw new TypeCheckException("Variable name '" + nameDef.getName() + "' already exists in the current scope.");

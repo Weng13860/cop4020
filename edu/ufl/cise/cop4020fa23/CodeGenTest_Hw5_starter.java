@@ -21,7 +21,7 @@ import java.time.Duration;
 import static edu.ufl.cise.cop4020fa23.Kind.NUM_LIT;
 import static edu.ufl.cise.cop4020fa23.Kind.STRING_LIT;
 import static org.junit.jupiter.api.Assertions.*;
-class HW5Tests {
+class CodeGenTest_Hw5_starter {
 	String packageName = "edu.ufl.cise.cop4020fa23";
 	String testURL =
 			"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Statue_of_Liberty %2C_NY.jpg/1280px-Statue_of_Liberty%2C_NY.jpg";

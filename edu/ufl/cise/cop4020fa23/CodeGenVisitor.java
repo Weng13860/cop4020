@@ -65,7 +65,7 @@ public class CodeGenVisitor implements ASTVisitor {
                     .append("$4,")
                     .append(expressionResult)
                     .append(");\n")
-                    .append("\n}\n}\n");
+                    .append("\n}\n};\n");
         }
         else if(lvt==Type.IMAGE){
             if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()==null){
@@ -142,7 +142,7 @@ public class CodeGenVisitor implements ASTVisitor {
                     .append(" = ")
                     .append(expressionResult)
                     .append(";\n");
-            return assignmentStatementCode.toString();
+            //return assignmentStatementCode.toString();
         }
 //copy code to conditions.
 
@@ -163,7 +163,12 @@ public class CodeGenVisitor implements ASTVisitor {
             return "((int)Math.round(Math.pow(" + left + "," + right + ")))";
         }
         else if(binaryExpr.getLeftExpr().getType() == Type.PIXEL){
-            return "ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS," + left+  "," + right + ")";
+            if(binaryExpr.getOpKind() == Kind.PLUS){
+                return "ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS," + left+  "," + right + ")";
+            }
+            else {
+                return "ImageOps.binaryPackedPixelIntOp(ImageOps.OP." + binaryExpr.getOpKind() + "," + left +  "," + right + ")";
+            }
         }
         else if((binaryExpr.getOpKind() == Kind.DIV || binaryExpr.getOpKind() == Kind.TIMES) && binaryExpr.getLeftExpr().getType() == Type.IMAGE){
             return "(ImageOps.binaryImageScalarOp(ImageOps.OP." + binaryExpr.getOpKind() + "," + left+ "," + right + "))";
