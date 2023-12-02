@@ -198,7 +198,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBlockStatement(StatementBlock statementBlock, Object arg) throws PLCCompilerException {
-       String blockaaa= statementBlock.getBlock().visit(this,arg).toString();
+        String blockaaa= statementBlock.getBlock().visit(this,arg).toString();
         return blockaaa;
     }
 
@@ -277,7 +277,7 @@ public class CodeGenVisitor implements ASTVisitor {
                             .append(");\n");
                 } else if(declarationType == Type.IMAGE){
                     Object initializerResult = initializer.visit(this, arg);
-                    javaCode.append(" =FileURLIO.readImage(")
+                    javaCode.append(" = FileURLIO.readImage(")
                             .append(initializerResult)
                             .append(");\n");
                 }

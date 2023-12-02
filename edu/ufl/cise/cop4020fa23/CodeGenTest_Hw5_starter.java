@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CodeGenTest_Hw5_starter {
 	String packageName = "edu.ufl.cise.cop4020fa23";
 	String testURL =
-			"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Statue_of_Liberty %2C_NY.jpg/1280px-Statue_of_Liberty%2C_NY.jpg";
+			"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Statue_of_Liberty%2C_NY.jpg/1280px-Statue_of_Liberty%2C_NY.jpg";
 	String owl =
 			"https://pocket-syndicated-images.s3.amazonaws.com/622ad94833741.png";
 	@AfterEach
