@@ -181,7 +181,6 @@ image i = s;
     public static BufferedImage apply(String s$1){
     BufferedImage i$2=FileURLIO.readImage(s$1);
     BufferedImage j$2=ImageOps.cloneImage(i$2);
-    ;
     return ImageOps.extractRed(j$2);
     }
     }
