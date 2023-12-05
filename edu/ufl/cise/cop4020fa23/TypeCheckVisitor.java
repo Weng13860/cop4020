@@ -48,13 +48,11 @@ public class TypeCheckVisitor implements ASTVisitor {
         public NameDef lookup(String name) {
             LinkedList<Entry> entries = map.get(name);
             if (entries == null) {
-                System.out.println("empty " + name);
                 return null;
             }
 
             for (Entry entry : entries) {
                 if (scopeStack.contains(entry.scopeID)) {
-                    System.out.println("NOT empty at " + name);
                     return entry.nameDef;
                 }
             }
