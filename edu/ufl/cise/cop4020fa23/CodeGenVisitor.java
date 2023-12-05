@@ -42,11 +42,8 @@ public class CodeGenVisitor implements ASTVisitor {
         if((assignmentExpr==Type.PIXEL || assignmentExpr == Type.INT)&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
             Object xExpr = lValue.getPixelSelector().xExpr();
             String xName = ((IdentExpr) xExpr).getName();
-//            lValue.setNameDef(new SyntheticNameDef(xName));
             Expr yExpr = lValue.getPixelSelector().yExpr();
             String yName = ((IdentExpr) yExpr).getName();
-            //lValue.setNameDef();
-
 
             assignmentStatementCode.append("\t\tfor(")
                     .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
