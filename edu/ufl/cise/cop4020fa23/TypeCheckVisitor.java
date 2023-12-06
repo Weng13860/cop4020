@@ -84,6 +84,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         st.enterScope();
         List<NameDef> params = program.getParams();
         for(NameDef param : params){
+            param.setJavaName(generateUniqueJavaName(param.getName()));
             if(st.lookup(param.getName()) != null){
                 throw new TypeCheckException("Variable name " + param.getName() + " already exists.");
             }
@@ -110,13 +111,16 @@ public class TypeCheckVisitor implements ASTVisitor {
             if (xExpr instanceof IdentExpr) {
                 String xName = ((IdentExpr) xExpr).getName();
                 if (st.lookup(xName) == null) {
+                    System.out.println(xName);
                     st.insert(new SyntheticNameDef(xName));
+                    xExpr.visit(this, arg);
                 }
             }
             if (yExpr instanceof IdentExpr) {
                 String yName = ((IdentExpr) yExpr).getName();
                 if (st.lookup(yName) == null) {
                     st.insert(new SyntheticNameDef(yName));
+                    yExpr.visit(this, arg);
                 }
             }
         }
@@ -239,13 +243,8 @@ public class TypeCheckVisitor implements ASTVisitor {
         // setting java name in nameDef
         nameDef.setJavaName(javaName);
 
-        // insert the NameDef into the symbol table
-        //st.insert(nameDef);
-
         // checking conditions
         if (expr == null || exprType == nameDefType || (exprType == Type.STRING && nameDefType == Type.IMAGE)) {
-            // insert to symbol table
-           // st.insert(nameDef);
             return nameDefType;
         } else {
             throw new TypeCheckException("Type mismatch in declaration: " + declaration);
@@ -354,6 +353,7 @@ public class TypeCheckVisitor implements ASTVisitor {
             throw new TypeCheckException("Undeclared identifier: " + lValue.getName());
         }
         lValue.setNameDef(nameDef);
+        lValue.getNameDef().setJavaName(generateUniqueJavaName(lValue.getName()));
 
         // getting variable type from lvalue
         Type varType = lValue.getVarType();
@@ -452,6 +452,7 @@ public class TypeCheckVisitor implements ASTVisitor {
             postfixExpr.pixel().visit(this,arg);
          inferredType = inferPostfixExprType(exprType,postfixExpr.pixel() ,null);}
         postfixExpr.setType(inferredType);
+
 
         return inferredType;
     }

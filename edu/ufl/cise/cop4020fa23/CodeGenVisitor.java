@@ -39,31 +39,45 @@ public class CodeGenVisitor implements ASTVisitor {
         Type a=assignmentStatement.getlValue().getNameDef().getType();
 
 
+
         if((assignmentExpr==Type.PIXEL || assignmentExpr == Type.INT)&&a==Type.IMAGE&&assignmentStatement.getlValue().getPixelSelector()!=null&&assignmentStatement.getlValue().getChannelSelector()==null){
             Object xExpr = lValue.getPixelSelector().xExpr();
             String xName = ((IdentExpr) xExpr).getName();
             Expr yExpr = lValue.getPixelSelector().yExpr();
             String yName = ((IdentExpr) yExpr).getName();
 
-            assignmentStatementCode.append("\t\tfor(")
-                    .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
-                    .append(" ").append(xName).append("$4 = 0; ").append(xName).append("$4 < ")
-                    .append(lValue.getNameDef().getJavaName())
-                    .append(".getWidth(); ").append(xName).append("$4++){\n").append("\t\t\tfor(")
-                    .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
-                    .append(" ").append(yName).append("$4 = 0; ").append(yName).append("$4 < ")
-                    .append(lValue.getNameDef().getJavaName())
-                    .append(".getHeight(); ").append(yName).append("$4++){\n")
-                    .append("\t\t\t\tImageOps.setRGB(")
-                    .append(lValue.getNameDef().getJavaName())
-                    .append(",")
-                    .append(xName)
-                    .append("$4,")
-                    .append(yName)
-                    .append("$4,")
-                    .append(expressionResult)
-                    .append(");\n")
-                    .append("\n}\n};\n");
+            if(((IdentExpr) xExpr).getNameDef() instanceof SyntheticNameDef){
+                assignmentStatementCode.append("\t\tfor(")
+                        .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
+                        .append(" ").append(xName).append("$4 = 0; ").append(xName).append("$4 < ")
+                        .append(lValue.getNameDef().getJavaName())
+                        .append(".getWidth(); ").append(xName).append("$4++){\n").append("\t\t\tfor(")
+                        .append(typetostring(lValue.getPixelSelector().xExpr().getType()))
+                        .append(" ").append(yName).append("$4 = 0; ").append(yName).append("$4 < ")
+                        .append(lValue.getNameDef().getJavaName())
+                        .append(".getHeight(); ").append(yName).append("$4++){\n")
+                        .append("\t\t\t\tImageOps.setRGB(")
+                        .append(lValue.getNameDef().getJavaName())
+                        .append(",")
+                        .append(xName)
+                        .append("$4,")
+                        .append(yName)
+                        .append("$4,")
+                        .append(expressionResult)
+                        .append(");\n")
+                        .append("\n}\n};\n");
+            }
+            else{
+                assignmentStatementCode.append("\t\tImageOps.setRGB(")
+                        .append(lValue.getNameDef().getJavaName())
+                        .append(",")
+                        .append(xName)
+                        .append("$4,")
+                        .append(yName)
+                        .append("$4,")
+                        .append(expressionResult)
+                        .append(");\n");
+            }
         }
         else if(lvt==Type.IMAGE){
             if(lValue.getChannelSelector()==null&&lValue.getPixelSelector()==null){

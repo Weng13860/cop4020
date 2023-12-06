@@ -113,5 +113,4 @@ public class NameDef extends AST {
 		throw new IllegalStateException("javaName not initialized");
 	}
 	
-	
 }
